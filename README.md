@@ -58,14 +58,37 @@ Outputs land in `output/predictions/{match_id}.json` plus a human-readable
 `_summary.txt`. **Review every number before submitting** — at knockout weights the
 human is the last guardrail.
 
-## Market data
+## Market data — free scraped sharp books (primary)
 
-Set `ODDS_API_KEY` (the-odds-api.com; paid tier recommended — one request costs
-`markets × regions` credits). The client prefers sharp books (Pinnacle, exchanges),
-falls back to a median-of-books consensus, Shin-devigs everything, and caches in
-SQLite. `src/prediction_markets.py` adds a Polymarket cross-check (sanity print only,
-never auto-blended). No key → the pipeline runs pure-model, which is the designed
-fallback for corners/cards/offsides anyway.
+`src/scrapers/` pulls odds directly from the books, refactored from the
+[CoreProp](https://github.com/friedman-max/CoreProp) scrapers (same transports:
+curl_cffi Chrome impersonation for Pinnacle/DK, the two-step `_ak` sbapi flow for
+FanDuel) but retargeted from US player props to soccer match markets:
+
+- **Pinnacle** (sharp anchor — when it quotes a market, no consensus is taken):
+  1X2, full totals ladders, **first-half totals**, BTTS, and **corner + booking
+  totals** (Pinnacle lists "(Corners)"/"(Bookings)" matchups for WC fixtures —
+  meaning corners/cards are market-anchored, not model-only)
+- **DraftKings** (v5 eventgroups) and **FanDuel** (event-page): median consensus
+  where Pinnacle is silent; pin discovered ids in `config/scrapers.json`
+- Everything Shin-devigged, SQLite-cached, raw books logged for CLV analysis
+- Live smoke test: `python -m src.scrapers.aggregator USA AUS`
+
+`ODDS_API_KEY` (the-odds-api.com) is now an optional *fallback* — the orchestrator
+tries scrapers first, the API second, pure model last. `src/prediction_markets.py`
+adds a Polymarket cross-check (sanity print only, never auto-blended).
+
+## Submission policy — what number actually goes on the platform
+
+Scoring is crowd-relative (RBP). `src/submission_policy.py` implements the
+derivation (full math in its docstring): submit `f = crowd + λ·(model − crowd)` where
+
+- **λ = edge²/(edge² + τ²)** — shrink toward the crowd by your model-error ratio
+  (this maximizes *expected* score; raw honesty is only optimal at τ = 0)
+- **± a position term**: trailing late → extremize slightly past the model
+  (variance is first-order cheap at the honest point); leading → shrink to the
+  crowd and deny chasers variance
+- hard caps [0.03, 0.97] and the 0.85 player-prop ceiling always bind
 
 ## Backtest & ML layer
 

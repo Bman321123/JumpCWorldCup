@@ -48,6 +48,8 @@ class Orchestrator:
         with open(cfg / "groups.json") as f:
             groups = json.load(f)
         self.team_names = {code: t["name"] for code, t in groups["teams"].items()}
+        self.team_aliases = {code: [t["name"], code] + t.get("aliases", [])
+                             for code, t in groups["teams"].items()}
 
         self.classifier = QuestionClassifier(str(cfg / "groups.json"), self.round_weights)
         self.engine = StatsEngine(ModelParameters.load(params_path))
@@ -59,7 +61,18 @@ class Orchestrator:
         self.validator = GuardrailValidator()
         self.players = PlayerShares(player_shares_path)
         self.db_path = db_path
-        self.odds = OddsClient(odds_api_key, db_path, self.team_names) if online else None
+        # Odds hierarchy: scraped sharp books first (free), The Odds API as
+        # fallback only if a key is configured, else pure model.
+        self.odds_sources = []
+        if online:
+            from .scrapers.aggregator import ScrapedOddsClient
+            self.odds_sources.append(ScrapedOddsClient(
+                db_path, self.team_names, str(cfg / "scrapers.json"),
+                self.team_aliases))
+            import os
+            if odds_api_key or os.environ.get("ODDS_API_KEY"):
+                self.odds_sources.append(OddsClient(odds_api_key, db_path,
+                                                    self.team_names))
 
     # ----- main entry -----
 
@@ -76,7 +89,12 @@ class Orchestrator:
         ctx.home_absence_mult = self.players.availability_multiplier(home, home_absences or [])
         ctx.away_absence_mult = self.players.availability_multiplier(away, away_absences or [])
 
-        market = self.odds.market_probs(home, away) if self.odds else None
+        market = None
+        for source in self.odds_sources:
+            market = source.market_probs(home, away)
+            if market:
+                logger.info("Market data from %s", type(source).__name__)
+                break
 
         parsed_list: List[ParsedQuestion] = []
         predictions: List[Prediction] = []
@@ -170,16 +188,39 @@ class Orchestrator:
         if q.family == QuestionFamily.GOAL_MARKET:
             if q.metric == "BTTS" and market.get("btts") is not None:
                 return market["btts"]
-            if (q.metric == "GOALS" and q.target == "MATCH"
-                    and q.window.value == "FULL"):
-                p_over = market.get("totals", {}).get(q.threshold)
-                if p_over is None:
-                    return None
-                if q.condition == Condition.GTE:
-                    return p_over
-                if q.condition == Condition.LT:
-                    return 1.0 - p_over
+            if q.metric == "GOALS" and q.target == "MATCH":
+                table = (market.get("totals", {}) if q.window.value == "FULL"
+                         else market.get("h1_totals", {}) if q.window.value == "H1"
+                         else {})
+                return self._totals_lookup(table, q.threshold, q.condition)
+        if (q.family == QuestionFamily.CORNER_MARKET and q.target == "MATCH"
+                and q.condition in (Condition.GTE, Condition.LT)):
+            table = (market.get("corner_totals", {}) if q.window.value == "FULL"
+                     else market.get("h1_corner_totals", {}) if q.window.value == "H1"
+                     else {})
+            return self._totals_lookup(table, q.threshold, q.condition)
+        if (q.family == QuestionFamily.CARD_MARKET and q.target == "MATCH"
+                and q.metric == "CARDS"
+                and q.condition in (Condition.GTE, Condition.LT)):
+            table = (market.get("booking_totals", {}) if q.window.value == "FULL"
+                     else market.get("h1_booking_totals", {}) if q.window.value == "H1"
+                     else {})
+            return self._totals_lookup(table, q.threshold, q.condition)
         return None
+
+    @staticmethod
+    def _totals_lookup(table: dict, threshold: float,
+                       condition: Condition) -> Optional[float]:
+        """'k or more' (integer k) == 'over k-0.5'; half-line thresholds map to
+        their own book line. Whole book lines have push semantics — never use
+        them for an integer GTE/LT question."""
+        if not table:
+            return None
+        line = threshold - 0.5 if float(threshold).is_integer() else threshold
+        p_over = table.get(line, table.get(str(line)))
+        if p_over is None:
+            return None
+        return p_over if condition == Condition.GTE else 1.0 - p_over
 
     def _fallback(self, text: str, qid: str, rnd: str) -> Prediction:
         t = text.lower()

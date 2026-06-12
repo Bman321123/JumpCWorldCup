@@ -1,0 +1,5 @@
+{
+  "_note": "Pin discovered ids here to skip discovery calls. pinnacle_league_ids: from src/scrapers/pinnacle.discover_league_ids; dk_event_group_id: from src/scrapers/draftkings.discover_event_group.",
+  "pinnacle_league_ids": null,
+  "dk_event_group_id": null
+}
