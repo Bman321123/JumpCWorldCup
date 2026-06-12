@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Poland at France",
+ "date": "2022-12-04T15:00Z",
+ "teams": {
+  "France": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 7,
+   "sot": 8
+  },
+  "Poland": {
+   "fouls": 8,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 1,
+   "sot": 3
+  }
+ }
+}

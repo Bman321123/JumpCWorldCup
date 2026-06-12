@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Ghana at South Korea",
+ "date": "2022-11-28T13:00Z",
+ "teams": {
+  "South Korea": {
+   "fouls": 13,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 13,
+   "sot": 7
+  },
+  "Ghana": {
+   "fouls": 9,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 3
+  }
+ }
+}

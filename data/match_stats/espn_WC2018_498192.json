@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Switzerland at Brazil",
+ "date": "2018-06-17T18:00Z",
+ "teams": {
+  "Brazil": {
+   "fouls": 12,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 7,
+   "sot": 4
+  },
+  "Switzerland": {
+   "fouls": 19,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 2,
+   "sot": 2
+  }
+ }
+}

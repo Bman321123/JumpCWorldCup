@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Australia at Argentina",
+ "date": "2022-12-03T19:00Z",
+ "teams": {
+  "Argentina": {
+   "fouls": 8,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 1,
+   "sot": 5
+  },
+  "Australia": {
+   "fouls": 15,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 1
+  }
+ }
+}

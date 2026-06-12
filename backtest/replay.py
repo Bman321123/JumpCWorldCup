@@ -65,6 +65,7 @@ def replay(db: str, name: str, spec: dict, half_life: float = 500.0,
         rows.append({
             "p_home": r["home_win"], "o_home": int(m.home_score > m.away_score),
             "p_draw": r["draw"], "o_draw": int(m.home_score == m.away_score),
+            "p_away": r["away_win"], "o_away": int(m.home_score < m.away_score),
             "p_over": p_over, "o_over": int(total > 2.5),
             "p_btts": p_btts, "o_btts": int(m.home_score > 0 and m.away_score > 0),
         })
@@ -76,8 +77,14 @@ def replay(db: str, name: str, spec: dict, half_life: float = 500.0,
     def base(rate, o):
         return float(np.mean((rate - d[o]) ** 2))
 
+    pairs = {
+        "MATCH_RESULT": [(p, o) for col in ("home", "draw", "away")
+                         for p, o in zip(d[f"p_{col}"], d[f"o_{col}"])],
+        "GOAL_MARKET": [(p, o) for col in ("over", "btts")
+                        for p, o in zip(d[f"p_{col}"], d[f"o_{col}"])],
+    }
     return {
-        "tournament": name, "n_matches": len(d),
+        "tournament": name, "n_matches": len(d), "pairs": pairs,
         "model": {"home_win": round(brier("p_home", "o_home"), 5),
                   "draw": round(brier("p_draw", "o_draw"), 5),
                   "over25": round(brier("p_over", "o_over"), 5),

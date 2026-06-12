@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Japan at Germany",
+ "date": "2022-11-23T13:00Z",
+ "teams": {
+  "Germany": {
+   "fouls": 6,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 6,
+   "sot": 9
+  },
+  "Japan": {
+   "fouls": 14,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 6,
+   "sot": 4
+  }
+ }
+}

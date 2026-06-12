@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Ghana at Portugal",
+ "date": "2022-11-24T16:00Z",
+ "teams": {
+  "Portugal": {
+   "fouls": 14,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 3,
+   "sot": 5
+  },
+  "Ghana": {
+   "fouls": 19,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 3,
+   "sot": 3
+  }
+ }
+}

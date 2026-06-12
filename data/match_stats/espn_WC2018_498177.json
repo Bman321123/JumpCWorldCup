@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Switzerland at Serbia",
+ "date": "2018-06-22T18:00Z",
+ "teams": {
+  "Serbia": {
+   "fouls": 17,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 3
+  },
+  "Switzerland": {
+   "fouls": 12,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 7,
+   "sot": 5
+  }
+ }
+}

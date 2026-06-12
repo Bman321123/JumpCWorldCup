@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Denmark at France",
+ "date": "2022-11-26T16:00Z",
+ "teams": {
+  "France": {
+   "fouls": 4,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 7
+  },
+  "Denmark": {
+   "fouls": 9,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 4,
+   "sot": 2
+  }
+ }
+}

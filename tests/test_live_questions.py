@@ -167,14 +167,32 @@ def test_tied_at_halftime(clf, orch):
     assert r_h1["draw"] > r_ft["draw"]
 
 
-def test_cross_event_compound_flags_not_silently_prices(orch):
-    """'USA scores first goal AND Paraguay scores in H2' must hit the flagged
-    fallback — pricing one leg as if it were the whole question is the silent
-    failure mode (would have submitted 53% on a ~22% event)."""
+def test_first_goal_combo_parses_and_prices(clf, orch):
+    """Live format: 'Will X score the first goal ... and Y score in the second
+    half?' — now modeled (race of Poissons x window marginal), not fallback."""
+    q = clf.parse("Will Czechia score the first goal of the game and South Korea "
+                  "score in the second half?", "CZE", "KOR", "group")
+    assert q.metric == "FGCOMBO|HOME|AWAY|H2"
     manifest = orch.predict_match(
         "CZE", "KOR", "2026-06-17",
         ["Will Czechia score the first goal of the game and South Korea score "
          "in the second half?"], tournament_round="group")
+    pred = manifest["predictions"][0]
+    assert pred["source"] != "fallback"
+    p = pred["model_probability"]
+    # both legs are ~0.4-0.6 events; the conjunction must sit well below either
+    leg1_cap = orch.engine.result_probs("CZE", "KOR")["home_win"] + 0.4
+    assert 0.05 < p < 0.40
+    assert p < leg1_cap
+
+
+def test_unsupported_compound_flags_not_silently_prices(orch):
+    """Unmodeled conjunctions must hit the flagged fallback — pricing one leg
+    as if it were the whole question is the silent failure mode."""
+    manifest = orch.predict_match(
+        "CZE", "KOR", "2026-06-17",
+        ["Will there be over 2.5 goals and a red card shown in the match?"],
+        tournament_round="group")
     pred = manifest["predictions"][0]
     assert pred["source"] == "fallback"
     assert "review" in pred["notes"].lower()

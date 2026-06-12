@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Portugal at South Korea",
+ "date": "2022-12-02T15:00Z",
+ "teams": {
+  "South Korea": {
+   "fouls": 9,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 6
+  },
+  "Portugal": {
+   "fouls": 10,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 5,
+   "corners": 4,
+   "sot": 6
+  }
+ }
+}

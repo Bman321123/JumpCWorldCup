@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Croatia at Morocco",
+ "date": "2022-11-23T10:00Z",
+ "teams": {
+  "Morocco": {
+   "fouls": 16,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 0,
+   "sot": 2
+  },
+  "Croatia": {
+   "fouls": 11,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 2
+  }
+ }
+}

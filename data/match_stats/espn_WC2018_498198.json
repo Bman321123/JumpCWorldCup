@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Australia at France",
+ "date": "2018-06-16T10:00Z",
+ "teams": {
+  "France": {
+   "fouls": 16,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 5
+  },
+  "Australia": {
+   "fouls": 19,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 1,
+   "sot": 1
+  }
+ }
+}

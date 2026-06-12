@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Senegal at Japan",
+ "date": "2018-06-24T15:00Z",
+ "teams": {
+  "Japan": {
+   "fouls": 8,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 2,
+   "sot": 3
+  },
+  "Senegal": {
+   "fouls": 14,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 5,
+   "sot": 7
+  }
+ }
+}

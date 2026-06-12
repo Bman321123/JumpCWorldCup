@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "England at Wales",
+ "date": "2022-11-29T19:00Z",
+ "teams": {
+  "Wales": {
+   "fouls": 16,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 1,
+   "sot": 1
+  },
+  "England": {
+   "fouls": 9,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 7
+  }
+ }
+}

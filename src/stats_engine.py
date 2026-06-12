@@ -171,6 +171,23 @@ class StatsEngine:
         cdf = lambda k: 0.0 if k < 0 else float(cdfv[min(k, len(cdfv) - 1)])
         return count_prob(cdf, threshold, condition)
 
+    def first_goal_combo(self, home: str, away: str, first_side: str,
+                         scorer_side: str, scorer_window: TemporalWindow,
+                         ctx: Optional[MatchContext] = None) -> float:
+        """P(first goal by `first_side` AND `scorer_side` scores in window).
+        Leg 1: race of two Poissons — P(side first | any goal) = lam_side/total,
+        times P(any goal). Leg 2: window marginal. Joint approximated as the
+        product (legs are mildly positively correlated through 'goals happen';
+        acceptable at these magnitudes — observed-live question type)."""
+        lam_h, lam_a = self.expected_goals(home, away, ctx)
+        p_any = 1.0 - float(np.exp(-(lam_h + lam_a)))
+        lam_first = lam_h if first_side == "HOME" else lam_a
+        p_first = p_any * lam_first / (lam_h + lam_a)
+        p_scores = self.goal_market(home, away, "GOALS",
+                                    scorer_side, 1.0, Condition.GTE,
+                                    scorer_window, ctx)
+        return p_first * p_scores
+
     # ----- knockout: extra time & penalties (PRD §4.7, fixes B8) -----
 
     def advance_prob(self, home: str, away: str, side: str = "HOME",

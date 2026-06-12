@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Croatia at Russia",
+ "date": "2018-07-07T18:00Z",
+ "teams": {
+  "Russia": {
+   "fouls": 25,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 7
+  },
+  "Croatia": {
+   "fouls": 18,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 8,
+   "sot": 3
+  }
+ }
+}

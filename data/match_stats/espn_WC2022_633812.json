@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Germany at Spain",
+ "date": "2022-11-27T19:00Z",
+ "teams": {
+  "Spain": {
+   "fouls": 13,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 6,
+   "sot": 3
+  },
+  "Germany": {
+   "fouls": 11,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 5,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

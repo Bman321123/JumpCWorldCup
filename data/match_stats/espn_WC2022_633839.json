@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Croatia at Japan",
+ "date": "2022-12-05T15:00Z",
+ "teams": {
+  "Japan": {
+   "fouls": 13,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 8,
+   "sot": 4
+  },
+  "Croatia": {
+   "fouls": 16,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

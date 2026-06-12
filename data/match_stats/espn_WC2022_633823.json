@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Mexico at Saudi Arabia",
+ "date": "2022-11-30T19:00Z",
+ "teams": {
+  "Saudi Arabia": {
+   "fouls": 20,
+   "yellows": 6,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 1,
+   "sot": 2
+  },
+  "Mexico": {
+   "fouls": 18,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 6,
+   "corners": 8,
+   "sot": 11
+  }
+ }
+}

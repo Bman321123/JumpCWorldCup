@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Russia at Uruguay",
+ "date": "2018-06-25T14:00Z",
+ "teams": {
+  "Uruguay": {
+   "fouls": 17,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 7
+  },
+  "Russia": {
+   "fouls": 18,
+   "yellows": 1,
+   "reds": 1,
+   "offsides": 2,
+   "corners": 2,
+   "sot": 1
+  }
+ }
+}

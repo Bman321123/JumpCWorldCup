@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Uruguay at Egypt",
+ "date": "2018-06-15T12:00Z",
+ "teams": {
+  "Egypt": {
+   "fouls": 12,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 0,
+   "sot": 3
+  },
+  "Uruguay": {
+   "fouls": 6,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

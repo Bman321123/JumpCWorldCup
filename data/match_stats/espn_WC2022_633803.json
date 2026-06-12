@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Senegal at Qatar",
+ "date": "2022-11-25T13:00Z",
+ "teams": {
+  "Qatar": {
+   "fouls": 7,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 6,
+   "sot": 3
+  },
+  "Senegal": {
+   "fouls": 12,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 7,
+   "sot": 5
+  }
+ }
+}

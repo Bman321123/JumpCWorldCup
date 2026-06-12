@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Denmark at Peru",
+ "date": "2018-06-16T16:00Z",
+ "teams": {
+  "Peru": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 5,
+   "corners": 3,
+   "sot": 6
+  },
+  "Denmark": {
+   "fouls": 18,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 7,
+   "sot": 3
+  }
+ }
+}

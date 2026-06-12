@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Russia at Spain",
+ "date": "2018-07-01T14:00Z",
+ "teams": {
+  "Spain": {
+   "fouls": 5,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 9
+  },
+  "Russia": {
+   "fouls": 19,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 1
+  }
+ }
+}

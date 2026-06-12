@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Iceland at Nigeria",
+ "date": "2018-06-22T15:00Z",
+ "teams": {
+  "Nigeria": {
+   "fouls": 9,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 4
+  },
+  "Iceland": {
+   "fouls": 10,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 3
+  }
+ }
+}

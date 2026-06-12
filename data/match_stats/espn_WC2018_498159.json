@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Brazil at Serbia",
+ "date": "2018-06-27T18:00Z",
+ "teams": {
+  "Serbia": {
+   "fouls": 13,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 5,
+   "sot": 1
+  },
+  "Brazil": {
+   "fouls": 7,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 9,
+   "sot": 6
+  }
+ }
+}

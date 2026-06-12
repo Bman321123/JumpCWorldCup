@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Ecuador at Netherlands",
+ "date": "2022-11-25T16:00Z",
+ "teams": {
+  "Netherlands": {
+   "fouls": 15,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 2,
+   "sot": 1
+  },
+  "Ecuador": {
+   "fouls": 12,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

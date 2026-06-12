@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Costa Rica at Brazil",
+ "date": "2018-06-22T12:00Z",
+ "teams": {
+  "Brazil": {
+   "fouls": 11,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 10,
+   "sot": 9
+  },
+  "Costa Rica": {
+   "fouls": 11,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 1,
+   "sot": 0
+  }
+ }
+}

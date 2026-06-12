@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Spain at Portugal",
+ "date": "2018-06-15T18:00Z",
+ "teams": {
+  "Portugal": {
+   "fouls": 12,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 4,
+   "sot": 3
+  },
+  "Spain": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 5,
+   "sot": 5
+  }
+ }
+}

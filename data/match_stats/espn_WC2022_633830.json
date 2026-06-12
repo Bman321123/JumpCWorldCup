@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Belgium at Croatia",
+ "date": "2022-12-01T15:00Z",
+ "teams": {
+  "Croatia": {
+   "fouls": 7,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 2,
+   "sot": 4
+  },
+  "Belgium": {
+   "fouls": 9,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 3
+  }
+ }
+}

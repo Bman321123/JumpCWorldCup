@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Egypt at Russia",
+ "date": "2018-06-19T18:00Z",
+ "teams": {
+  "Russia": {
+   "fouls": 11,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 7,
+   "sot": 3
+  },
+  "Egypt": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 1
+  }
+ }
+}

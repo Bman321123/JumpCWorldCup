@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Switzerland at Sweden",
+ "date": "2018-07-03T14:00Z",
+ "teams": {
+  "Sweden": {
+   "fouls": 11,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 3,
+   "sot": 3
+  },
+  "Switzerland": {
+   "fouls": 13,
+   "yellows": 2,
+   "reds": 1,
+   "offsides": 0,
+   "corners": 11,
+   "sot": 4
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Saudi Arabia at Poland",
+ "date": "2022-11-26T13:00Z",
+ "teams": {
+  "Poland": {
+   "fouls": 18,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 3
+  },
+  "Saudi Arabia": {
+   "fouls": 15,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 5
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Spain at Japan",
+ "date": "2022-12-01T19:00Z",
+ "teams": {
+  "Japan": {
+   "fouls": 9,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 0,
+   "sot": 3
+  },
+  "Spain": {
+   "fouls": 6,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 2,
+   "sot": 5
+  }
+ }
+}

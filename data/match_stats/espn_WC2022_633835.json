@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "United States at Netherlands",
+ "date": "2022-12-03T15:00Z",
+ "teams": {
+  "Netherlands": {
+   "fouls": 10,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 6
+  },
+  "United States": {
+   "fouls": 5,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 5,
+   "sot": 8
+  }
+ }
+}

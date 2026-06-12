@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Argentina at France",
+ "date": "2018-06-30T14:00Z",
+ "teams": {
+  "France": {
+   "fouls": 21,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 0,
+   "sot": 4
+  },
+  "Argentina": {
+   "fouls": 15,
+   "yellows": 5,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 4,
+   "sot": 4
+  }
+ }
+}

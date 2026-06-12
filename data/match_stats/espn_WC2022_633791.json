@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Tunisia at Denmark",
+ "date": "2022-11-22T13:00Z",
+ "teams": {
+  "Denmark": {
+   "fouls": 9,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 11,
+   "sot": 5
+  },
+  "Tunisia": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 9,
+   "sot": 1
+  }
+ }
+}

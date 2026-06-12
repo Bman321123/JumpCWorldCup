@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Iceland at Argentina",
+ "date": "2018-06-16T13:00Z",
+ "teams": {
+  "Argentina": {
+   "fouls": 10,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 10,
+   "sot": 7
+  },
+  "Iceland": {
+   "fouls": 15,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 2,
+   "sot": 3
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Senegal at Ecuador",
+ "date": "2022-11-29T15:00Z",
+ "teams": {
+  "Ecuador": {
+   "fouls": 23,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 4
+  },
+  "Senegal": {
+   "fouls": 11,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 6,
+   "sot": 3
+  }
+ }
+}

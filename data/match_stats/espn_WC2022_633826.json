@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Denmark at Australia",
+ "date": "2022-11-30T15:00Z",
+ "teams": {
+  "Australia": {
+   "fouls": 11,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 2,
+   "sot": 4
+  },
+  "Denmark": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 6,
+   "sot": 3
+  }
+ }
+}

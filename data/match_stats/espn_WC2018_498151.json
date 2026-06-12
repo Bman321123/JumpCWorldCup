@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Denmark at Croatia",
+ "date": "2018-07-01T18:00Z",
+ "teams": {
+  "Croatia": {
+   "fouls": 5,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 5,
+   "sot": 7
+  },
+  "Denmark": {
+   "fouls": 19,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 3
+  }
+ }
+}

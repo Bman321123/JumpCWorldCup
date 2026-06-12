@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Serbia at Cameroon",
+ "date": "2022-11-28T10:00Z",
+ "teams": {
+  "Cameroon": {
+   "fouls": 8,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 8
+  },
+  "Serbia": {
+   "fouls": 13,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 3,
+   "sot": 5
+  }
+ }
+}

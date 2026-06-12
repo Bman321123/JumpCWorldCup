@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "France at Uruguay",
+ "date": "2018-07-06T14:00Z",
+ "teams": {
+  "Uruguay": {
+   "fouls": 16,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 4,
+   "sot": 4
+  },
+  "France": {
+   "fouls": 15,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 2
+  }
+ }
+}

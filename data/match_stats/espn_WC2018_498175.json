@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Sweden at Germany",
+ "date": "2018-06-23T18:00Z",
+ "teams": {
+  "Germany": {
+   "fouls": 12,
+   "yellows": 0,
+   "reds": 1,
+   "offsides": 5,
+   "corners": 8,
+   "sot": 5
+  },
+  "Sweden": {
+   "fouls": 13,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 3,
+   "sot": 6
+  }
+ }
+}

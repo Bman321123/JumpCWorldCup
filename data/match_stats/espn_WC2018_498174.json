@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Mexico at South Korea",
+ "date": "2018-06-23T15:00Z",
+ "teams": {
+  "South Korea": {
+   "fouls": 24,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 7,
+   "sot": 6
+  },
+  "Mexico": {
+   "fouls": 7,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 5
+  }
+ }
+}

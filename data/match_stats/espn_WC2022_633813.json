@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Costa Rica at Japan",
+ "date": "2022-11-27T10:00Z",
+ "teams": {
+  "Japan": {
+   "fouls": 22,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 3
+  },
+  "Costa Rica": {
+   "fouls": 9,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 0,
+   "sot": 1
+  }
+ }
+}

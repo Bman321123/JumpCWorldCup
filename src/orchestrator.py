@@ -24,7 +24,8 @@ from .player_layer import PlayerShares
 from .question_classifier import QuestionClassifier
 from .stats_engine import ModelParameters, StatsEngine
 from .types import (Condition, MatchContext, MotivationState, ParsedQuestion,
-                    Prediction, QuestionFamily, QuestionParseError, ResultScope)
+                    Prediction, QuestionFamily, QuestionParseError, ResultScope,
+                    TemporalWindow)
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,10 @@ class Orchestrator:
         self.engine = StatsEngine(ModelParameters.load(params_path))
         self.resolver = ContextResolver(str(cfg / "venues.json"),
                                         str(cfg / "referee_table.json"), online=online)
+        if calibrators_path is None:
+            default_cal = Path(params_path).parent / "calibrators.joblib"
+            if default_cal.exists():
+                calibrators_path = str(default_cal)
         self.calibration = (CalibrationLayer(path=calibrators_path)
                             if calibrators_path else CalibrationLayer())
         self.blender = EnsembleBlender()
@@ -162,6 +167,10 @@ class Orchestrator:
             return {"HOME": r["home_win"], "DRAW": r["draw"],
                     "AWAY": r["away_win"]}[q.target]
         if f == QuestionFamily.GOAL_MARKET:
+            if q.metric.startswith("FGCOMBO|"):
+                _, s1, s2, w2 = q.metric.split("|")
+                return self.engine.first_goal_combo(
+                    q.home_team, q.away_team, s1, s2, TemporalWindow(w2), ctx)
             return self.engine.goal_market(q.home_team, q.away_team, q.metric,
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)

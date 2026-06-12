@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Saudi Arabia at Argentina",
+ "date": "2022-11-22T10:00Z",
+ "teams": {
+  "Argentina": {
+   "fouls": 7,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 10,
+   "corners": 9,
+   "sot": 6
+  },
+  "Saudi Arabia": {
+   "fouls": 21,
+   "yellows": 6,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 2,
+   "sot": 2
+  }
+ }
+}

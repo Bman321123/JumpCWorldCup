@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Senegal at England",
+ "date": "2022-12-04T19:00Z",
+ "teams": {
+  "England": {
+   "fouls": 16,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 4
+  },
+  "Senegal": {
+   "fouls": 12,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 1
+  }
+ }
+}

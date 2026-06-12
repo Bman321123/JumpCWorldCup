@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Mexico at Argentina",
+ "date": "2022-11-26T19:00Z",
+ "teams": {
+  "Argentina": {
+   "fouls": 15,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 4,
+   "sot": 2
+  },
+  "Mexico": {
+   "fouls": 19,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 2,
+   "sot": 1
+  }
+ }
+}

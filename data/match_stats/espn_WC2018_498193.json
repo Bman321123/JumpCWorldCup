@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Mexico at Germany",
+ "date": "2018-06-17T15:00Z",
+ "teams": {
+  "Germany": {
+   "fouls": 10,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 8,
+   "sot": 9
+  },
+  "Mexico": {
+   "fouls": 15,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 1,
+   "sot": 4
+  }
+ }
+}

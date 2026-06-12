@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Argentina at Nigeria",
+ "date": "2018-06-26T18:00Z",
+ "teams": {
+  "Nigeria": {
+   "fouls": 20,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 3
+  },
+  "Argentina": {
+   "fouls": 15,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

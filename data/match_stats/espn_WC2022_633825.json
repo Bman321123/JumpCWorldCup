@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "France at Tunisia",
+ "date": "2022-11-30T15:00Z",
+ "teams": {
+  "Tunisia": {
+   "fouls": 14,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 7,
+   "sot": 3
+  },
+  "France": {
+   "fouls": 6,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 8,
+   "sot": 3
+  }
+ }
+}

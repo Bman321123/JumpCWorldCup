@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Cameroon at Switzerland",
+ "date": "2022-11-24T10:00Z",
+ "teams": {
+  "Switzerland": {
+   "fouls": 12,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 11,
+   "sot": 3
+  },
+  "Cameroon": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 5,
+   "sot": 5
+  }
+ }
+}

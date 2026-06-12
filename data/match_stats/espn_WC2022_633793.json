@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Poland at Mexico",
+ "date": "2022-11-22T16:00Z",
+ "teams": {
+  "Mexico": {
+   "fouls": 14,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 6,
+   "sot": 4
+  },
+  "Poland": {
+   "fouls": 15,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 2
+  }
+ }
+}

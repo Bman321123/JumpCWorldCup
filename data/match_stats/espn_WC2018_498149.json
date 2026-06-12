@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Japan at Belgium",
+ "date": "2018-07-02T18:00Z",
+ "teams": {
+  "Belgium": {
+   "fouls": 13,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 10,
+   "sot": 8
+  },
+  "Japan": {
+   "fouls": 9,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 4
+  }
+ }
+}

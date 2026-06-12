@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "South Korea at Sweden",
+ "date": "2018-06-18T12:00Z",
+ "teams": {
+  "Sweden": {
+   "fouls": 20,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 6,
+   "sot": 5
+  },
+  "South Korea": {
+   "fouls": 23,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 0
+  }
+ }
+}

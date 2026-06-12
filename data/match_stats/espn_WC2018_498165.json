@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "France at Denmark",
+ "date": "2018-06-26T14:00Z",
+ "teams": {
+  "Denmark": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 4,
+   "sot": 1
+  },
+  "France": {
+   "fouls": 10,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 2,
+   "sot": 4
+  }
+ }
+}

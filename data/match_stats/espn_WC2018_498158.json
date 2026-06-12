@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Colombia at Senegal",
+ "date": "2018-06-28T14:00Z",
+ "teams": {
+  "Senegal": {
+   "fouls": 15,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 1,
+   "sot": 3
+  },
+  "Colombia": {
+   "fouls": 15,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 3,
+   "sot": 2
+  }
+ }
+}

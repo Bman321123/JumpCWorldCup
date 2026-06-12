@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Panama at Belgium",
+ "date": "2018-06-18T15:00Z",
+ "teams": {
+  "Belgium": {
+   "fouls": 17,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 9,
+   "sot": 6
+  },
+  "Panama": {
+   "fouls": 18,
+   "yellows": 5,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 3,
+   "sot": 2
+  }
+ }
+}

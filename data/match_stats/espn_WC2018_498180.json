@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Croatia at Argentina",
+ "date": "2018-06-21T18:00Z",
+ "teams": {
+  "Argentina": {
+   "fouls": 15,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 5,
+   "sot": 3
+  },
+  "Croatia": {
+   "fouls": 23,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 2,
+   "sot": 5
+  }
+ }
+}

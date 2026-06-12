@@ -97,11 +97,26 @@ class QuestionClassifier:
                                   threshold, Condition.GTE, window,
                                   ResultScope.NONE, weight)
 
+        # first-goal compound (live every match): "Will X score the first goal
+        # of the game and Y score in the second half?"
+        fg = re.search(r"\bwill (.+?) score the first goal\b.*?\band (.+?) score"
+                       r"(?: a goal)?(?: in the (first|second) half)?", text)
+        if fg:
+            s1 = self._find_team(fg.group(1), home_team, away_team)
+            s2 = self._find_team(fg.group(2), home_team, away_team)
+            if s1 and s2:
+                w2 = {"first": "H1", "second": "H2", None: "FULL"}[fg.group(3)]
+                return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET,
+                                      home_team, away_team, s1,
+                                      f"FGCOMBO|{s1}|{s2}|{w2}", 1.0,
+                                      Condition.BINARY_YES, window,
+                                      ResultScope.NONE, weight)
+
         # any OTHER conjunction is an unsupported compound — fail loudly so it
         # routes to the flagged fallback instead of silently pricing one leg
-        # (live 2026-06-12: "score the first goal AND ... score in the second
-        # half" would otherwise parse as a simple team-scores question)
-        if re.search(r"\band\b", text) and re.search(r"\b(score|goal)\b", text):
+        # (live 2026-06-12: this class of question would otherwise parse as a
+        # simple team-scores question — 53% submitted on a ~22% event)
+        if re.search(r"\band\b", text) and re.search(r"\b(scores?|goals?)\b", text):
             raise QuestionParseError(f"Unsupported compound question: {raw_text!r}")
 
         # penalty awarded (observed live)

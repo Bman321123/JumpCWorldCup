@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Croatia at Iceland",
+ "date": "2018-06-26T18:00Z",
+ "teams": {
+  "Iceland": {
+   "fouls": 10,
+   "yellows": 3,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 10,
+   "sot": 6
+  },
+  "Croatia": {
+   "fouls": 12,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 5,
+   "sot": 2
+  }
+ }
+}

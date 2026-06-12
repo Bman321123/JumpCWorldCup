@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "South Korea at Uruguay",
+ "date": "2022-11-24T13:00Z",
+ "teams": {
+  "Uruguay": {
+   "fouls": 7,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 4,
+   "sot": 1
+  },
+  "South Korea": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 3,
+   "sot": 0
+  }
+ }
+}

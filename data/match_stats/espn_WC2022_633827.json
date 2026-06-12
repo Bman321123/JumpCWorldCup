@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Germany at Costa Rica",
+ "date": "2022-12-01T19:00Z",
+ "teams": {
+  "Costa Rica": {
+   "fouls": 3,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 4,
+   "corners": 1,
+   "sot": 6
+  },
+  "Germany": {
+   "fouls": 9,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 14,
+   "sot": 11
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Portugal at Iran",
+ "date": "2018-06-25T18:00Z",
+ "teams": {
+  "Iran": {
+   "fouls": 16,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 1,
+   "sot": 2
+  },
+  "Portugal": {
+   "fouls": 10,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 1,
+   "corners": 5,
+   "sot": 4
+  }
+ }
+}

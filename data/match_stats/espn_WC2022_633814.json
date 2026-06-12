@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Morocco at Belgium",
+ "date": "2022-11-27T13:00Z",
+ "teams": {
+  "Belgium": {
+   "fouls": 10,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 9,
+   "sot": 3
+  },
+  "Morocco": {
+   "fouls": 14,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 1,
+   "sot": 4
+  }
+ }
+}

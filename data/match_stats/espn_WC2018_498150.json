@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Mexico at Brazil",
+ "date": "2018-07-02T14:00Z",
+ "teams": {
+  "Brazil": {
+   "fouls": 6,
+   "yellows": 2,
+   "reds": 0,
+   "offsides": 0,
+   "corners": 8,
+   "sot": 10
+  },
+  "Mexico": {
+   "fouls": 18,
+   "yellows": 4,
+   "reds": 0,
+   "offsides": 2,
+   "corners": 7,
+   "sot": 1
+  }
+ }
+}

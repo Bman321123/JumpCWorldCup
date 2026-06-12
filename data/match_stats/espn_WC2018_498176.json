@@ -1,0 +1,23 @@
+{
+ "source": "espn",
+ "event": "Tunisia at Belgium",
+ "date": "2018-06-23T12:00Z",
+ "teams": {
+  "Belgium": {
+   "fouls": 12,
+   "yellows": 0,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 5,
+   "sot": 12
+  },
+  "Tunisia": {
+   "fouls": 13,
+   "yellows": 1,
+   "reds": 0,
+   "offsides": 3,
+   "corners": 2,
+   "sot": 5
+  }
+ }
+}
