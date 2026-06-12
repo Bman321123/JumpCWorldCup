@@ -1,0 +1,10 @@
+{
+  "_WARNING": "ASSUMED multipliers — the contest confirms 'weighted Brier' but has not published weights. Verify on the platform (PRD v2.2 §0.4) and edit here; nothing else needs to change.",
+  "group": 1.0,
+  "round_of_32": 2.0,
+  "round_of_16": 4.0,
+  "quarterfinal": 8.0,
+  "semifinal": 12.0,
+  "third_place": 12.0,
+  "final": 16.0
+}

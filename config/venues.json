@@ -1,0 +1,21 @@
+{
+  "_note": "All 16 WC2026 venues. Coordinates/elevations approximate — verify. Altitude flags drive goal/corner multipliers (>=1500m).",
+  "venues": [
+    {"stadium": "MetLife Stadium", "city": "New York/New Jersey", "country": "USA", "lat": 40.813, "lon": -74.074, "elevation_m": 3},
+    {"stadium": "Gillette Stadium", "city": "Boston (Foxborough)", "country": "USA", "lat": 42.091, "lon": -71.264, "elevation_m": 27},
+    {"stadium": "Lincoln Financial Field", "city": "Philadelphia", "country": "USA", "lat": 39.901, "lon": -75.168, "elevation_m": 12},
+    {"stadium": "Hard Rock Stadium", "city": "Miami", "country": "USA", "lat": 25.958, "lon": -80.239, "elevation_m": 3},
+    {"stadium": "Mercedes-Benz Stadium", "city": "Atlanta", "country": "USA", "lat": 33.755, "lon": -84.401, "elevation_m": 320},
+    {"stadium": "NRG Stadium", "city": "Houston", "country": "USA", "lat": 29.685, "lon": -95.411, "elevation_m": 15},
+    {"stadium": "AT&T Stadium", "city": "Dallas (Arlington)", "country": "USA", "lat": 32.748, "lon": -97.093, "elevation_m": 180},
+    {"stadium": "Arrowhead Stadium", "city": "Kansas City", "country": "USA", "lat": 39.049, "lon": -94.484, "elevation_m": 265},
+    {"stadium": "SoFi Stadium", "city": "Los Angeles (Inglewood)", "country": "USA", "lat": 33.953, "lon": -118.339, "elevation_m": 30},
+    {"stadium": "Levi's Stadium", "city": "San Francisco Bay Area", "country": "USA", "lat": 37.403, "lon": -121.970, "elevation_m": 2},
+    {"stadium": "Lumen Field", "city": "Seattle", "country": "USA", "lat": 47.595, "lon": -122.332, "elevation_m": 5},
+    {"stadium": "BC Place", "city": "Vancouver", "country": "Canada", "lat": 49.277, "lon": -123.112, "elevation_m": 5},
+    {"stadium": "BMO Field", "city": "Toronto", "country": "Canada", "lat": 43.633, "lon": -79.419, "elevation_m": 76},
+    {"stadium": "Estadio Azteca", "city": "Mexico City", "country": "Mexico", "lat": 19.303, "lon": -99.150, "elevation_m": 2240},
+    {"stadium": "Estadio Akron", "city": "Guadalajara (Zapopan)", "country": "Mexico", "lat": 20.682, "lon": -103.462, "elevation_m": 1560},
+    {"stadium": "Estadio BBVA", "city": "Monterrey (Guadalupe)", "country": "Mexico", "lat": 25.669, "lon": -100.244, "elevation_m": 540}
+  ]
+}

@@ -1,0 +1,34 @@
+[
+ {
+  "tournament": "WC2022",
+  "n_matches": 64,
+  "model": {
+   "home_win": 0.24195,
+   "draw": 0.18344,
+   "over25": 0.25933,
+   "btts": 0.24738
+  },
+  "base_rate": {
+   "home_win": 0.24685,
+   "draw": 0.17969,
+   "over25": 0.25277,
+   "btts": 0.24996
+  }
+ },
+ {
+  "tournament": "EURO2024",
+  "n_matches": 51,
+  "model": {
+   "home_win": 0.20485,
+   "draw": 0.22266,
+   "over25": 0.24556,
+   "btts": 0.25114
+  },
+  "base_rate": {
+   "home_win": 0.23163,
+   "draw": 0.22917,
+   "over25": 0.25384,
+   "btts": 0.25502
+  }
+ }
+]

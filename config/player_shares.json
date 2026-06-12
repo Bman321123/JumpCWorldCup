@@ -1,0 +1,6 @@
+{
+  "_note": "Per-player involvement shares (share of team xG+xA while on pitch, club+intl blend, FBref). Built in Tier 1 by ingestion/ingest_fbref.py; schema example below. Used by the availability adjuster (PRD v2.2 §4.9a).",
+  "players": {
+    "Example Player": {"team": "FRA", "position": "FW", "share": 0.30, "expected_minutes": 90}
+  }
+}

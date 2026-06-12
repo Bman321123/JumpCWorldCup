@@ -1,0 +1,13 @@
+{
+  "_note": "Populate from FIFA's 2026 referee list x historical card rates (worldfootball.net, WorldReferee). Multipliers shrink toward 1.0 below ~10 matches, so missing data is safe. Schema example below.",
+  "referees": {
+    "EXAMPLE_REF_001": {
+      "name": "Example Referee",
+      "nationality": "BRA",
+      "yellow_per_match": 4.1,
+      "red_per_match": 0.22,
+      "fouls_per_match": 27.3,
+      "total_matches": 48
+    }
+  }
+}
