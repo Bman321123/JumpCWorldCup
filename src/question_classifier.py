@@ -66,12 +66,59 @@ class QuestionClassifier:
         side = self._find_team(text, home_team, away_team)
 
         window = TemporalWindow.FULL
-        if re.search(r"\b(first half|1st half|opening half)\b", text):
+        if re.search(r"\b(first half|1st half|opening half|halftime|half-time|half time)\b",
+                     text):
             window = TemporalWindow.H1
         elif re.search(r"\b(second half|2nd half)\b", text):
             window = TemporalWindow.H2
 
         threshold, condition = self._parse_threshold(text)
+
+        # comparative: "will X have more <metric> than Y" (observed live 2026-06-11)
+        comp = re.search(r"\bwill (.+?) have more ([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
+                         text)
+        if comp:
+            # target must be the team in group(1), NOT whichever alias is longest
+            subject_side = self._find_team(comp.group(1), home_team, away_team)
+            if subject_side is not None:
+                _, metric = self._family_metric(comp.group(2))
+                family = self._comparative_family(metric)
+                return ParsedQuestion(raw_text, qid, family, home_team, away_team,
+                                      subject_side, metric, 0.0,
+                                      Condition.MORE_THAN_OPP, window,
+                                      ResultScope.NONE, weight)
+
+        # compound: "both teams score AND N or more total goals" (observed live)
+        if ("both teams" in text and "score" in text
+                and re.search(r"\band\b", text) and threshold is not None):
+            return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET,
+                                  home_team, away_team, "MATCH", "BTTS_AND_TOTAL",
+                                  threshold, Condition.GTE, window,
+                                  ResultScope.NONE, weight)
+
+        # penalty awarded (observed live)
+        if "penalt" in text and "shootout" not in text:
+            return ParsedQuestion(raw_text, qid, QuestionFamily.PENALTY_MARKET,
+                                  home_team, away_team, "MATCH", "PENALTY", 1.0,
+                                  Condition.BINARY_YES, window, ResultScope.NONE,
+                                  weight)
+
+        # player props (observed live): "will <name> score a goal" / "... shot(s) on target"
+        if side is None and "both teams" not in text:
+            player = re.search(r"^will ([a-z .'\-]+?) (?:score|have|get|record)\b", text)
+            if player and "team" not in player.group(1) and "there" != player.group(1).strip():
+                name = player.group(1).strip().title()
+                if re.search(r"shots? on target", text):
+                    return ParsedQuestion(raw_text, qid, QuestionFamily.PLAYER_MARKET,
+                                          home_team, away_team, name, "PLAYER_SOT",
+                                          threshold if threshold is not None else 1.0,
+                                          condition or Condition.GTE, window,
+                                          ResultScope.NONE, weight)
+                if re.search(r"\bscore\b", text):
+                    return ParsedQuestion(raw_text, qid, QuestionFamily.PLAYER_MARKET,
+                                          home_team, away_team, name, "PLAYER_GOAL",
+                                          1.0, Condition.BINARY_YES, window,
+                                          ResultScope.NONE, weight)
 
         family, metric = self._family_metric(text)
 
@@ -91,6 +138,12 @@ class QuestionClassifier:
                                   Condition.BINARY_YES, window, ResultScope.NONE, weight)
 
         if threshold is None or condition is None:
+            # "Will South Korea score (in the second half)?" — implicit >= 1 goal
+            if (family == QuestionFamily.GOAL_MARKET and metric == "GOALS"
+                    and side is not None and re.search(r"\bscore\b", text)):
+                return ParsedQuestion(raw_text, qid, family, home_team, away_team,
+                                      side, "GOALS", 1.0, Condition.GTE, window,
+                                      ResultScope.NONE, weight)
             raise QuestionParseError(
                 f"Could not parse threshold/condition from: {raw_text!r}")
 
@@ -118,10 +171,14 @@ class QuestionClassifier:
             return QuestionFamily.OFFSIDE_MARKET, "OFFSIDES"
         if "corner" in text:
             return QuestionFamily.CORNER_MARKET, "CORNERS"
+        if re.search(r"shots? on target", text):
+            return QuestionFamily.SHOTS_MARKET, "SOT"
         if "red card" in text:
             return QuestionFamily.CARD_MARKET, "REDS"
-        if re.search(r"\b(yellow card|booking|caution|card)", text):
+        if "yellow card" in text:
             return QuestionFamily.CARD_MARKET, "YELLOWS"
+        if re.search(r"\b(booking|caution|cards?)\b", text):
+            return QuestionFamily.CARD_MARKET, "CARDS"   # "total cards" = Y + R
         if "both teams" in text and "score" in text:
             return QuestionFamily.GOAL_MARKET, "BTTS"
         if "clean sheet" in text:
@@ -131,6 +188,17 @@ class QuestionClassifier:
         if re.search(r"\b(goal|goals|score)\b", text):
             return QuestionFamily.GOAL_MARKET, "GOALS"
         raise QuestionParseError(f"No question family matched: {text!r}")
+
+    @staticmethod
+    def _comparative_family(metric: str) -> QuestionFamily:
+        return {
+            "CORNERS": QuestionFamily.CORNER_MARKET,
+            "SOT": QuestionFamily.SHOTS_MARKET,
+            "CARDS": QuestionFamily.CARD_MARKET,
+            "YELLOWS": QuestionFamily.CARD_MARKET,
+            "OFFSIDES": QuestionFamily.OFFSIDE_MARKET,
+            "GOALS": QuestionFamily.GOAL_MARKET,
+        }.get(metric, QuestionFamily.GOAL_MARKET)
 
     def _parse_result(self, raw: str, text: str, qid: str, home: str, away: str,
                       side: Optional[str], rnd: str, weight: float,

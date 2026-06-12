@@ -120,6 +120,23 @@ class Orchestrator:
 
     def _model_prob(self, q: ParsedQuestion, ctx: MatchContext) -> float:
         f = q.family
+        if q.condition == Condition.MORE_THAN_OPP:
+            return self.engine.comparative_prob(q.home_team, q.away_team, q.metric,
+                                                q.target, q.window, ctx)
+        if f == QuestionFamily.PENALTY_MARKET:
+            return self.engine.penalty_prob(ctx)
+        if f == QuestionFamily.SHOTS_MARKET:
+            return self.engine.shots_market(q.home_team, q.away_team, q.target,
+                                            q.threshold, q.condition, q.window, ctx)
+        if f == QuestionFamily.PLAYER_MARKET:
+            from .player_layer import player_prop_prob
+            lam_h, lam_a = self.engine.expected_goals(q.home_team, q.away_team, ctx)
+            p, note = player_prop_prob(q.target, q.metric, q.threshold,
+                                       lam_h, lam_a, q.home_team, q.away_team,
+                                       self.players)
+            if "REVIEW" in note:
+                logger.warning("Player prop needs review: %s", note)
+            return p
         if f == QuestionFamily.MATCH_RESULT:
             if q.scope == ResultScope.ADVANCE and q.target in ("HOME", "AWAY"):
                 return self.engine.advance_prob(q.home_team, q.away_team, q.target, ctx)

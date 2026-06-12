@@ -12,6 +12,8 @@ class QuestionFamily(Enum):
     CORNER_MARKET = "CORNER_MARKET"
     CARD_MARKET = "CARD_MARKET"
     OFFSIDE_MARKET = "OFFSIDE_MARKET"
+    SHOTS_MARKET = "SHOTS_MARKET"          # shots on target (observed live 2026-06-11)
+    PENALTY_MARKET = "PENALTY_MARKET"      # "will a penalty be awarded" (observed live)
     PLAYER_MARKET = "PLAYER_MARKET"
 
 
@@ -20,6 +22,7 @@ class Condition(Enum):
     LT = "LT"
     EQ = "EQ"
     BINARY_YES = "YES"
+    MORE_THAN_OPP = "GT_OPP"               # comparative: team X stat > team Y stat
 
 
 class TemporalWindow(Enum):

@@ -24,13 +24,16 @@ ET_GOAL_SCALE = 0.30          # 30/90 minutes * ~0.9 tempo factor (PRD §4.7)
 PENS_BASE = 0.50
 
 # H1 share of full-match counts; H2 = 1 - share (PRD §4.8, fixes B9 incl. cards)
-DEFAULT_HALF_SHARES = {"GOALS": 0.45, "CORNERS": 0.46, "CARDS": 0.33, "OFFSIDES": 0.48}
+DEFAULT_HALF_SHARES = {"GOALS": 0.45, "CORNERS": 0.46, "CARDS": 0.33,
+                       "OFFSIDES": 0.48, "SHOTS": 0.46}
 
 # Per-team per-match fallback rates when no fitted value exists
 DEFAULTS = {
     "corner_for": 4.9, "corner_against": 4.9,
     "yellow": 1.7, "red": 0.09, "offside": 2.0,
     "yellow_var_ratio": 1.5, "red_var_ratio": 1.55,
+    "sot_for": 4.3,                  # shots on target per team per match
+    "penalty_awarded": 0.29,         # P(any penalty kick awarded), VAR era
 }
 
 
@@ -46,6 +49,7 @@ class ModelParameters:
     yellow_rates: Dict[str, float] = field(default_factory=dict)
     red_rates: Dict[str, float] = field(default_factory=dict)
     offside_rates: Dict[str, float] = field(default_factory=dict)
+    sot_rates: Dict[str, float] = field(default_factory=dict)
     half_shares: Dict[str, float] = field(default_factory=lambda: dict(DEFAULT_HALF_SHARES))
     fitted_at: str = ""
     data_cutoff: str = ""
@@ -138,6 +142,14 @@ class StatsEngine:
         M = self._window_matrix(home, away, window, ctx)
         if metric == "BTTS":
             return float(M[1:, 1:].sum())
+        if metric == "BTTS_AND_TOTAL":
+            # compound (observed live): both teams score AND total >= threshold,
+            # exact from the same tau-corrected matrix
+            g = np.arange(MAX_GOALS + 1)
+            tot = g[:, None] + g[None, :]
+            k = int(np.ceil(threshold))
+            mask = (g[:, None] >= 1) & (g[None, :] >= 1) & (tot >= k)
+            return float(M[mask].sum())
         if metric == "CLEAN_SHEET":
             if target == "HOME":
                 return float(M[:, 0].sum())          # away scores 0
@@ -207,6 +219,9 @@ class StatsEngine:
         intensity = ctx.card_intensity if ctx else 1.0
         mu_h = base.get(home, default) * ref_mult * intensity
         mu_a = base.get(away, default) * ref_mult * intensity
+        if card_type == "CARDS":             # "total cards" = yellows + reds
+            mu_h += self.p.red_rates.get(home, DEFAULTS["red"]) * ref_mult * intensity
+            mu_a += self.p.red_rates.get(away, DEFAULTS["red"]) * ref_mult * intensity
         mu = {"HOME": mu_h, "AWAY": mu_a}.get(target, mu_h + mu_a)
         mu *= self._share("CARDS", window)
         dist = nbinom_from_mean(mu, ratio)
@@ -222,3 +237,72 @@ class StatsEngine:
         lam = {"HOME": lam_h, "AWAY": lam_a}.get(target, lam_h + lam_a)
         lam *= self._share("OFFSIDES", window)
         return count_prob(lambda k: float(poisson.cdf(k, lam)), threshold, condition)
+
+    # ----- shots on target (observed question type, 2026-06-11) -----
+
+    def shots_market(self, home: str, away: str, target: str, threshold: float,
+                     condition: Condition, window: TemporalWindow = TemporalWindow.FULL,
+                     ctx: Optional[MatchContext] = None) -> float:
+        lam_h, lam_a = self._sot_lambdas(home, away, ctx)
+        s = self._share("SHOTS", window)
+        lam = {"HOME": lam_h, "AWAY": lam_a}.get(target, lam_h + lam_a) * s
+        return count_prob(lambda k: float(poisson.cdf(k, lam)), threshold, condition)
+
+    def _sot_lambdas(self, home: str, away: str,
+                     ctx: Optional[MatchContext]) -> Tuple[float, float]:
+        """SOT scales with attacking strength: anchor the default on the ratio of
+        the team's expected goals to the league-average expected goals."""
+        lam_h, lam_a = self.expected_goals(home, away, ctx)
+        avg_goals = float(np.exp(self.p.mu))
+        base = DEFAULTS["sot_for"]
+        sot_h = self.p.sot_rates.get(home, base * lam_h / avg_goals)
+        sot_a = self.p.sot_rates.get(away, base * lam_a / avg_goals)
+        return sot_h, sot_a
+
+    # ----- comparative markets: P(team X stat > team Y stat) (observed live) -----
+
+    def comparative_prob(self, home: str, away: str, metric: str, target: str,
+                         window: TemporalWindow = TemporalWindow.FULL,
+                         ctx: Optional[MatchContext] = None) -> float:
+        """P(target team's count is STRICTLY greater than the opponent's),
+        independent Poissons. Ties count as NO — exactly the live phrasing
+        'will X have more ... than Y'."""
+        if metric == "CORNERS":
+            lam_h, lam_a = self.corner_lambdas(home, away, ctx)
+            share = self._share("CORNERS", window)
+        elif metric == "SOT":
+            lam_h, lam_a = self._sot_lambdas(home, away, ctx)
+            share = self._share("SHOTS", window)
+        elif metric in ("CARDS", "YELLOWS"):
+            lam_h = self.p.yellow_rates.get(home, DEFAULTS["yellow"])
+            lam_a = self.p.yellow_rates.get(away, DEFAULTS["yellow"])
+            share = self._share("CARDS", window)
+        elif metric == "OFFSIDES":
+            lam_h = self.p.offside_rates.get(home, DEFAULTS["offside"])
+            lam_a = self.p.offside_rates.get(away, DEFAULTS["offside"])
+            share = self._share("OFFSIDES", window)
+        elif metric == "GOALS":
+            lam_h, lam_a = self.expected_goals(home, away, ctx)
+            share = self._share("GOALS", window)
+        else:
+            raise ValueError(f"comparative_prob: unsupported metric {metric}")
+        lam_h, lam_a = lam_h * share, lam_a * share
+        if target == "AWAY":
+            lam_h, lam_a = lam_a, lam_h
+        return _poisson_greater(lam_h, lam_a)
+
+    # ----- penalty awarded (observed question type) -----
+
+    def penalty_prob(self, ctx: Optional[MatchContext] = None) -> float:
+        p = DEFAULTS["penalty_awarded"]
+        if ctx and ctx.card_intensity > 1.0:
+            p *= 1.05                        # scrappy/high-stakes matches: slight bump
+        return min(p, 0.40)
+
+
+def _poisson_greater(lam_x: float, lam_y: float, n_max: int = 40) -> float:
+    """P(X > Y) for independent Poissons."""
+    ks = np.arange(n_max + 1)
+    py = poisson.pmf(ks, lam_y)
+    p_x_gt = 1.0 - poisson.cdf(ks, lam_x)    # P(X > k) per k
+    return float(np.sum(py * p_x_gt))
