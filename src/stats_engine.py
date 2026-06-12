@@ -129,8 +129,10 @@ class StatsEngine:
         h1 = self.p.half_shares.get(metric, DEFAULT_HALF_SHARES[metric])
         return h1 if window == TemporalWindow.H1 else 1.0 - h1
 
-    def result_probs(self, home: str, away: str, ctx: Optional[MatchContext] = None) -> Dict[str, float]:
-        M = self._window_matrix(home, away, TemporalWindow.FULL, ctx)
+    def result_probs(self, home: str, away: str, ctx: Optional[MatchContext] = None,
+                     window: TemporalWindow = TemporalWindow.FULL) -> Dict[str, float]:
+        """1X2 probabilities; window=H1 answers 'tied/leading at halftime'."""
+        M = self._window_matrix(home, away, window, ctx)
         hw, dr, aw = float(np.tril(M, -1).sum()), float(np.trace(M)), float(np.triu(M, 1).sum())
         t = hw + dr + aw
         return {"home_win": hw / t, "draw": dr / t, "away_win": aw / t}

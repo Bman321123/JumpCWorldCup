@@ -74,8 +74,9 @@ class QuestionClassifier:
 
         threshold, condition = self._parse_threshold(text)
 
-        # comparative: "will X have more <metric> than Y" (observed live 2026-06-11)
-        comp = re.search(r"\bwill (.+?) have more ([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
+        # comparative: "will X have/finish with more <metric> than Y" (observed live)
+        comp = re.search(r"\bwill (.+?) (?:have|finish with|end with|record) more "
+                         r"([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
                          text)
         if comp:
             # target must be the team in group(1), NOT whichever alias is longest
@@ -95,6 +96,13 @@ class QuestionClassifier:
                                   home_team, away_team, "MATCH", "BTTS_AND_TOTAL",
                                   threshold, Condition.GTE, window,
                                   ResultScope.NONE, weight)
+
+        # any OTHER conjunction is an unsupported compound — fail loudly so it
+        # routes to the flagged fallback instead of silently pricing one leg
+        # (live 2026-06-12: "score the first goal AND ... score in the second
+        # half" would otherwise parse as a simple team-scores question)
+        if re.search(r"\band\b", text) and re.search(r"\b(score|goal)\b", text):
+            raise QuestionParseError(f"Unsupported compound question: {raw_text!r}")
 
         # penalty awarded (observed live)
         if "penalt" in text and "shootout" not in text:
@@ -183,7 +191,8 @@ class QuestionClassifier:
             return QuestionFamily.GOAL_MARKET, "BTTS"
         if "clean sheet" in text:
             return QuestionFamily.GOAL_MARKET, "CLEAN_SHEET"
-        if re.search(r"\b(win|draw|advance|qualify|progress|go through)\b", text):
+        if re.search(r"\b(win|draw|tied?|level|advance|qualify|progress|go through)\b",
+                     text):
             return QuestionFamily.MATCH_RESULT, "RESULT"
         if re.search(r"\b(goal|goals|score)\b", text):
             return QuestionFamily.GOAL_MARKET, "GOALS"
@@ -209,14 +218,13 @@ class QuestionClassifier:
         if re.search(r"\b(advance|qualify|progress|go through)\b", text):
             scope = ResultScope.ADVANCE
         elif is_knockout and not explicit_90:
-            # Platform convention unverified (PRD §0.4) — default knockout "win"
-            # to ADVANCE; flip here if the rules say otherwise.
+            # CONFIRMED 2026-06-13 (platform rule): knockout "win" = ADVANCE.
             scope = ResultScope.ADVANCE
         else:
             scope = ResultScope.WIN_90
 
-        if re.search(r"\bdraw\b", text):
-            target = "DRAW"
+        if re.search(r"\b(draw|tied?|level)\b", text):
+            target = "DRAW"                      # incl. "At halftime, will the match be tied?"
             scope = ResultScope.WIN_90
         elif side is not None:
             target = side

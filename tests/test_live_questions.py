@@ -144,3 +144,37 @@ def test_compound_leq_marginals(orch):
 def test_penalty_in_sane_band(orch):
     p = orch.engine.penalty_prob()
     assert 0.20 <= p <= 0.40
+
+
+# ---- formats observed live on the platform API, 2026-06-12 (USA vs PAR) ----
+
+def test_finish_with_more_corners_comparative(clf):
+    q = clf.parse("Will Paraguay finish with more corner kicks than United States?",
+                  "USA", "PAR", "group")
+    assert q.condition == Condition.MORE_THAN_OPP
+    assert q.family == QuestionFamily.CORNER_MARKET
+    assert q.target == "AWAY"
+
+
+def test_tied_at_halftime(clf, orch):
+    q = clf.parse("At halftime, will the match be tied?", "CZE", "KOR", "group")
+    assert q.family == QuestionFamily.MATCH_RESULT
+    assert q.target == "DRAW"
+    assert q.window == TemporalWindow.H1
+    # H1 draws are far likelier than full-match draws
+    r_h1 = orch.engine.result_probs("CZE", "KOR", window=TemporalWindow.H1)
+    r_ft = orch.engine.result_probs("CZE", "KOR")
+    assert r_h1["draw"] > r_ft["draw"]
+
+
+def test_cross_event_compound_flags_not_silently_prices(orch):
+    """'USA scores first goal AND Paraguay scores in H2' must hit the flagged
+    fallback — pricing one leg as if it were the whole question is the silent
+    failure mode (would have submitted 53% on a ~22% event)."""
+    manifest = orch.predict_match(
+        "CZE", "KOR", "2026-06-17",
+        ["Will Czechia score the first goal of the game and South Korea score "
+         "in the second half?"], tournament_round="group")
+    pred = manifest["predictions"][0]
+    assert pred["source"] == "fallback"
+    assert "review" in pred["notes"].lower()

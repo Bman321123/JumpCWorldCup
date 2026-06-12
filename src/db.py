@@ -50,11 +50,29 @@ CREATE TABLE IF NOT EXISTS market_cache (
     cache_key TEXT PRIMARY KEY,
     raw_json TEXT, fetched_at REAL
 );
+
+CREATE TABLE IF NOT EXISTS crowd_capture (
+    question_norm TEXT,
+    capture_day TEXT,
+    question_text TEXT,
+    crowd_pct REAL,
+    own_pct REAL,
+    ambiguous INT,
+    url TEXT,
+    raw_block TEXT,
+    captured_at TEXT,
+    PRIMARY KEY (question_norm, capture_day) ON CONFLICT REPLACE
+);
 """
 
 
 def init_db(path: str) -> None:
     con = sqlite3.connect(path)
     con.executescript(SCHEMA)
+    # migration for DBs created before crowd capture existed
+    try:
+        con.execute("ALTER TABLE predictions_log ADD COLUMN crowd_probability REAL")
+    except sqlite3.OperationalError:
+        pass                                     # column already present
     con.commit()
     con.close()

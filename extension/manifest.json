@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Probability Cup Crowd Capture",
+  "version": "1.0.0",
+  "description": "Captures questions + crowd forecasts from sportspredict.com into the local JumpCWorldCup logger. Read-only; never clicks or submits.",
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "*://*.sportspredict.com/*",
+    "http://127.0.0.1:8765/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.sportspredict.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Probability Cup Crowd Capture"
+  }
+}

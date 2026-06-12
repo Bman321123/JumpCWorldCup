@@ -158,7 +158,7 @@ class Orchestrator:
         if f == QuestionFamily.MATCH_RESULT:
             if q.scope == ResultScope.ADVANCE and q.target in ("HOME", "AWAY"):
                 return self.engine.advance_prob(q.home_team, q.away_team, q.target, ctx)
-            r = self.engine.result_probs(q.home_team, q.away_team, ctx)
+            r = self.engine.result_probs(q.home_team, q.away_team, ctx, q.window)
             return {"HOME": r["home_win"], "DRAW": r["draw"],
                     "AWAY": r["away_win"]}[q.target]
         if f == QuestionFamily.GOAL_MARKET:
@@ -182,7 +182,8 @@ class Orchestrator:
         if not market:
             return None
         if (q.family == QuestionFamily.MATCH_RESULT and market.get("h2h")
-                and q.scope != ResultScope.ADVANCE):
+                and q.scope != ResultScope.ADVANCE
+                and q.window.value == "FULL"):    # never price an H1 result off 90' odds
             return {"HOME": market["h2h"]["home"], "DRAW": market["h2h"]["draw"],
                     "AWAY": market["h2h"]["away"]}.get(q.target)
         if q.family == QuestionFamily.GOAL_MARKET:
