@@ -18,15 +18,18 @@ import requests
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "club_matches.csv"
 
-LEAGUES = ["E0", "E1", "D1", "I1", "SP1", "F1", "N1", "P1", "SC0", "T1"]
-SEASONS = ["1718", "1819", "1920", "2021", "2122", "2223", "2324", "2425"]
+LEAGUES = ["E0", "E1", "E2", "D1", "D2", "I1", "I2", "SP1", "SP2",
+           "F1", "F2", "N1", "P1", "SC0", "B1", "T1", "G1"]
+SEASONS = ["1213", "1314", "1415", "1516", "1617", "1718", "1819",
+           "1920", "2021", "2122", "2223", "2324", "2425"]
 BASE = "https://www.football-data.co.uk/mmz4281"
 
 KEEP = {"Date": "date", "HomeTeam": "home", "AwayTeam": "away",
         "FTHG": "fthg", "FTAG": "ftag", "HC": "hc", "AC": "ac",
         "HY": "hy", "AY": "ay", "HR": "hr", "AR": "ar",
         "HST": "hst", "AST": "ast", "HF": "hf", "AF": "af",
-        "B365H": "oh", "B365D": "od", "B365A": "oa"}
+        "B365H": "oh", "B365D": "od", "B365A": "oa",
+        "B365>2.5": "o25o", "B365<2.5": "o25u"}
 
 
 def main() -> None:

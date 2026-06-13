@@ -22,7 +22,12 @@ run $PY ingestion/ingest_historical.py
 run $PY ingestion/ingest_elo.py
 run $PY ingestion/compute_parameters.py --since 2019-01-01 --elo params/elo.json
 run $PY calibration/train_calibrators.py
-# 5. pull settled platform results into predictions_log (closes the loop)
+# 5. refresh the ML micro-market models (corners/cards/sot/fouls) on the club
+#    corpus + re-run the ship-gate. Run ml/ingest_club.py weekly to grow the
+#    corpus; the feature build + train are CPU-heavy but fine overnight.
+run $PY ml/feature_store_v2.py
+run env OMP_NUM_THREADS=2 $PY ml/train_all.py
+# 6. pull settled platform results into predictions_log (closes the loop)
 run $PY tools/sync_results.py
 
 echo "=== done $(date -u +%FT%TZ) ===" | tee -a "$LOG"

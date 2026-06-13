@@ -65,11 +65,11 @@ class Orchestrator:
         self.blender = EnsembleBlender()
         self.validator = GuardrailValidator()
         self.players = PlayerShares(player_shares_path)
-        # Gated ML micro-models: load if present, but only ACTIVE if they passed
-        # their ship-gate at train time (corner GBM currently fails -> inactive,
-        # corners stay structural; a future retrain auto-activates it).
-        from .ml_models import CornerMLModel
-        self.corner_ml = CornerMLModel(str(Path(params_path).parent / "ml_corners.joblib"))
+        # Gated ML micro-models: a family is ACTIVE only if it passed its
+        # walk-forward ship-gate at train time. Inactive families fall back to
+        # the structural model. The registry auto-wires any passer.
+        from .ml_models import MLRegistry
+        self.ml = MLRegistry(str(Path(params_path).parent))
         self.db_path = db_path
         # Odds hierarchy: scraped sharp books first (free), The Odds API as
         # fallback only if a key is configured, else pure model.
@@ -214,17 +214,11 @@ class Orchestrator:
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)
         if f == QuestionFamily.CORNER_MARKET:
-            struct = self.engine.corner_market(q.home_team, q.away_team, q.target,
-                                               q.threshold, q.condition, q.window, ctx)
-            # gated ML override for full-match total corners (inactive unless the
-            # corner GBM passed its ship-gate; today it does not, so this is a no-op)
-            if (self.corner_ml.active and q.target == "MATCH"
-                    and q.window == TemporalWindow.FULL
-                    and q.condition in (Condition.GTE, Condition.LT)):
-                ml = self._corner_ml_prob(q, ctx)
-                if ml is not None:
-                    return ml if q.condition == Condition.GTE else 1.0 - ml
-            return struct
+            ml = self._ml_total("corners", q, ctx)
+            if ml is not None:
+                return ml
+            return self.engine.corner_market(q.home_team, q.away_team, q.target,
+                                              q.threshold, q.condition, q.window, ctx)
         if f == QuestionFamily.CARD_MARKET:
             ref_mult = self.resolver.referees.multiplier(ctx.referee_id, q.metric)
             return self.engine.card_market(q.home_team, q.away_team, q.target,
@@ -235,22 +229,56 @@ class Orchestrator:
                                               q.threshold, q.condition, q.window, ctx)
         raise ValueError(f"No model dispatch for family {f}")
 
-    def _corner_ml_prob(self, q: ParsedQuestion, ctx: MatchContext):
-        """Build the ML feature vector for total-corners P(over threshold)."""
+    # families whose per-team rates transfer directly from club training to WC
+    # deployment (raw rate tables, not Dixon-Coles): corners/cards/sot/fouls.
+    _ML_OPP = {"corners": True, "sot": True, "cards": False, "fouls": False}
+
+    def _ml_total(self, family: str, q: ParsedQuestion, ctx: MatchContext):
+        """Gated ML for full-match total markets. Returns P(condition) or None
+        when the family's model is inactive / question isn't a match total."""
+        model = self.ml.get(family)
+        if (model is None or q.target != "MATCH"
+                or q.window != TemporalWindow.FULL
+                or q.condition not in (Condition.GTE, Condition.LT)):
+            return None
         import math
         from scipy.stats import poisson
         from .stats_engine import DEFAULTS
         p = self.engine.p
-        hcf = p.corner_for.get(q.home_team, DEFAULTS["corner_for"])
-        hca = p.corner_against.get(q.home_team, DEFAULTS["corner_against"])
-        acf = p.corner_for.get(q.away_team, DEFAULTS["corner_for"])
-        aca = p.corner_against.get(q.away_team, DEFAULTS["corner_against"])
-        lam_h, lam_a = self.engine.corner_lambdas(q.home_team, q.away_team, ctx)
-        lam = lam_h + lam_a
+        if family == "corners":
+            hf, hg = p.corner_for.get(q.home_team, DEFAULTS["corner_for"]), \
+                     p.corner_against.get(q.home_team, DEFAULTS["corner_against"])
+            af, ag = p.corner_for.get(q.away_team, DEFAULTS["corner_for"]), \
+                     p.corner_against.get(q.away_team, DEFAULTS["corner_against"])
+            avg = DEFAULTS["corner_against"]
+        elif family == "sot":
+            hf = p.sot_rates.get(q.home_team, DEFAULTS["sot_for"]); hg = DEFAULTS["sot_for"]
+            af = p.sot_rates.get(q.away_team, DEFAULTS["sot_for"]); ag = DEFAULTS["sot_for"]
+            avg = DEFAULTS["sot_for"]
+        elif family == "cards":
+            hf = p.yellow_rates.get(q.home_team, DEFAULTS["yellow"]) + \
+                 p.red_rates.get(q.home_team, DEFAULTS["red"])
+            af = p.yellow_rates.get(q.away_team, DEFAULTS["yellow"]) + \
+                 p.red_rates.get(q.away_team, DEFAULTS["red"])
+            hg = ag = avg = hf + af
+        elif family == "fouls":
+            hf = p.fouls_rates.get(q.home_team, DEFAULTS["fouls"])
+            af = p.fouls_rates.get(q.away_team, DEFAULTS["fouls"])
+            hg = ag = avg = DEFAULTS["fouls"]
+        else:
+            return None
+        lam = (hf * (ag / avg) + af * (hg / avg)) if self._ML_OPP[family] else hf + af
+        lam_h, lam_a = self.engine.expected_goals(q.home_team, q.away_team, ctx)
         k = math.ceil(q.threshold)
         struct_over = float(1.0 - poisson.cdf(k - 1, lam))
-        return self.corner_ml.prob_over(hcf, hca, acf, aca, lam, q.threshold,
-                                        struct_over)
+        feats = {"home_for": hf, "home_against": hg, "away_for": af,
+                 "away_against": ag, "home_goals": lam_h, "away_goals": lam_a,
+                 "lam_struct": lam, "threshold": q.threshold,
+                 "struct_prob": struct_over, "mkt": float("nan")}
+        p_over = model.prob_over(feats)
+        if p_over is None:
+            return None
+        return p_over if q.condition == Condition.GTE else 1.0 - p_over
 
     def _market_prob(self, q: ParsedQuestion, market: Optional[dict]) -> Optional[float]:
         if not market:

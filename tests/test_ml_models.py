@@ -1,20 +1,29 @@
-"""ML micro-model gating — a failed-gate model must stay inactive and be a no-op."""
+"""ML micro-model gating — failed-gate families must stay inactive (no-op)."""
 from pathlib import Path
 
-from src.ml_models import CornerMLModel
+from src.ml_models import FAMILIES, MicroMLModel, MLRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_failed_gate_model_is_inactive():
-    """ml_corners.joblib failed its gate, so the wrapper must be inactive and
-    prob_over must return None (orchestrator then keeps the structural model)."""
-    m = CornerMLModel(str(ROOT / "params" / "ml_corners.joblib"))
-    assert m.active is False
-    assert m.prob_over(5, 5, 5, 5, 10.0, 9.5, 0.5) is None
-
-
 def test_missing_model_is_inactive():
-    m = CornerMLModel("/nonexistent/path.joblib")
+    m = MicroMLModel("/nonexistent/path.joblib")
     assert m.active is False
-    assert m.prob_over(5, 5, 5, 5, 10.0, 9.5, 0.5) is None
+    assert m.prob_over({"home_for": 5, "threshold": 9.5}) is None
+
+
+def test_registry_loads_all_families():
+    reg = MLRegistry(str(ROOT / "params"))
+    # every family slot exists; .get returns a model only if it passed its gate
+    for fam in FAMILIES:
+        assert fam in reg.models
+        got = reg.get(fam)
+        assert got is None or got.active is True
+
+
+def test_failed_gate_family_returns_none():
+    """A trained-but-failed family (e.g. corners) must not be served."""
+    reg = MLRegistry(str(ROOT / "params"))
+    corners = reg.models.get("corners")
+    if corners is not None and not corners.active:
+        assert reg.get("corners") is None
