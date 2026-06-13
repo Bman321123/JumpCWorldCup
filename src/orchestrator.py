@@ -29,6 +29,23 @@ from .types import (Condition, MatchContext, MotivationState, ParsedQuestion,
 
 logger = logging.getLogger(__name__)
 
+def _fuzzy_player(name: str, market_players: dict):
+    """Match a platform player name to a FanDuel market name (surname-tolerant)."""
+    if not market_players:
+        return None
+    nl = name.lower()
+    for cand, props in market_players.items():
+        cl = cand.lower()
+        if cl == nl or nl in cl or cl in nl:
+            return props
+    # surname fallback
+    surname = nl.split()[-1] if nl.split() else nl
+    for cand, props in market_players.items():
+        if surname and surname in cand.lower():
+            return props
+    return None
+
+
 FALLBACK_RATES = {  # emergency only — review any match that uses these
     "win": 0.38, "draw": 0.25, "btts": 0.47, "goal": 0.53,
     "corner": 0.50, "card": 0.55, "offside": 0.55, "default": 0.45,
@@ -65,6 +82,7 @@ class Orchestrator:
         self.blender = EnsembleBlender()
         self.validator = GuardrailValidator()
         self.players = PlayerShares(player_shares_path)
+        self._market_cache: dict = {}
         # Gated ML micro-models: a family is ACTIVE only if it passed its
         # walk-forward ship-gate at train time. Inactive families fall back to
         # the structural model. The registry auto-wires any passer.
@@ -166,6 +184,7 @@ class Orchestrator:
                 ctx.lambda_home_override, ctx.lambda_away_override = implied
                 logger.info("Market-implied lambdas %s=%.2f %s=%.2f",
                             home, implied[0], away, implied[1])
+        self._market_cache = market or {}        # for player-shots lookup in _model_prob
 
         parsed_list: List[ParsedQuestion] = []
         predictions: List[Prediction] = []
@@ -225,9 +244,19 @@ class Orchestrator:
         if f == QuestionFamily.PLAYER_MARKET:
             from .player_layer import player_prop_prob
             lam_h, lam_a = self.engine.expected_goals(q.home_team, q.away_team, ctx)
+            # opponent defensive quality: the side the player is NOT on
+            info = self.players.players.get(q.target, {})
+            on_home = info.get("team") == q.home_team
+            opp = q.away_team if on_home else q.home_team
+            opp_sot_against = self.engine.p.sot_against.get(opp)
+            # FanDuel player SHOTS market (real signal even with no SOT market)
+            fd_shots = None
+            if self._market_cache:
+                ps = self._market_cache.get("player_shots", {})
+                fd_shots = ps.get(q.target) or _fuzzy_player(q.target, ps)
             p, note = player_prop_prob(q.target, q.metric, q.threshold,
                                        lam_h, lam_a, q.home_team, q.away_team,
-                                       self.players)
+                                       self.players, opp_sot_against, fd_shots)
             if "REVIEW" in note:
                 logger.warning("Player prop needs review: %s", note)
             return p

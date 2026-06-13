@@ -75,7 +75,8 @@ def aggregate() -> None:
     from src.stats_engine import ModelParameters
     sums: dict = {}
     counts: dict = {}
-    against: dict = {}
+    against: dict = {}        # opponent's corners conceded
+    sot_ag: dict = {}         # opponent's SOT conceded (defensive quality)
     for f in PARSED_DIR.glob("*.json"):
         report = json.loads(f.read_text())
         teams = list(report.get("teams", {}).items())
@@ -90,6 +91,8 @@ def aggregate() -> None:
                     t[k] += stats[k]
             if opp_stats.get("corners") is not None:
                 against[name] = against.get(name, 0.0) + opp_stats["corners"]
+            if opp_stats.get("sot") is not None:
+                sot_ag[name] = sot_ag.get(name, 0.0) + opp_stats["sot"]
 
     params = ModelParameters.load(str(ROOT / "params" / "dixon_coles.json"))
     with open(ROOT / "config" / "groups.json") as f:
@@ -114,8 +117,10 @@ def aggregate() -> None:
             for key in keys:
                 getattr(params, table_name)[key] = round(rate, 3)
         ca = (against.get(name, 0.0) + GLOBAL["corners"] * SHRINK_N) / (n + SHRINK_N)
+        sa = (sot_ag.get(name, 0.0) + GLOBAL["sot"] * SHRINK_N) / (n + SHRINK_N)
         for key in keys:
             params.corner_against[key] = round(ca, 3)
+            params.sot_against[key] = round(sa, 3)
         updated += 1
     params.save(str(ROOT / "params" / "dixon_coles.json"))
     wc_covered = sum(1 for c in teams_cfg if c in params.corner_for)

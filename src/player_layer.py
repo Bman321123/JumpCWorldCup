@@ -38,51 +38,76 @@ DEFAULT_SHARE_BY_POS = {"FW": 0.25, "MF": 0.12, "DF": 0.04, "GK": 0.005}
 DEFAULT_SOT90_BY_POS = {"FW": 1.3, "MF": 0.7, "DF": 0.25, "GK": 0.01}
 UNKNOWN_PLAYER_SHARE = 0.18              # assume attacking player if platform asks
 UNKNOWN_PLAYER_SOT90 = 1.1
+SOT_LEAGUE_AVG = 4.3                     # team SOT/match baseline (for opp. normalization)
+SOT_PER_SHOT = 0.38                      # ~38% of shots are on target (shots->SOT bridge)
+MARKET_BLEND = 0.55                      # weight on the FanDuel-shots-derived estimate
+
+
+def _poisson_ge(lam: float, k: int) -> float:
+    cdf, term = 0.0, math.exp(-lam)
+    for i in range(max(k, 0)):
+        cdf += term
+        term *= lam / (i + 1)
+    return 1.0 - cdf
 
 
 def player_prop_prob(name: str, metric: str, threshold: float,
                      lam_home: float, lam_away: float,
                      home: str, away: str,
-                     shares: "PlayerShares") -> tuple[float, str]:
-    """Returns (probability, audit note). Works with or without a shares entry;
-    unknown players get attacking-position priors and a review flag."""
+                     shares: "PlayerShares",
+                     opp_sot_against: Optional[float] = None,
+                     fd_shots: Optional[dict] = None) -> tuple[float, str]:
+    """Full-picture player prop: the player's own rate x the opponent's
+    defensive quality x expected opportunity, blended with the FanDuel player
+    SHOTS market (shots -> SOT bridge) when available. Returns (prob, note).
+
+    This is the human reasoning made explicit: how good is the player, how many
+    chances do they get, and how leaky is THIS opponent.
+    """
     info = shares.players.get(name)
-    if info and info.get("team") in (home, away):
-        lam_team = lam_home if info["team"] == home else lam_away
+    on_team = info.get("team") if info else None
+    if info and on_team in (home, away):
+        lam_team = lam_home if on_team == home else lam_away
         pos = info.get("position", "MF")
         apps = float(info.get("apps", 0))
-        # shrink BOTH involvement and SOT toward position priors by sample size:
-        # a star with 2 logged matches and 0 SOT is not a 3%-to-get-a-shot bet
-        # (the Schick lesson). K pseudo-matches of prior pull sparse rates in.
         K = 5.0
         prior_share = DEFAULT_SHARE_BY_POS.get(pos, 0.12)
         prior_sot90 = DEFAULT_SOT90_BY_POS.get(pos, 0.7)
-        raw_share = float(info.get("share", prior_share))
-        raw_sot90 = float(info.get("sot90", prior_sot90))
-        share = (raw_share * apps + prior_share * K) / (apps + K)
-        sot90 = (raw_sot90 * apps + prior_sot90 * K) / (apps + K)
+        share = (float(info.get("share", prior_share)) * apps + prior_share * K) / (apps + K)
+        sot90 = (float(info.get("sot90", prior_sot90)) * apps + prior_sot90 * K) / (apps + K)
         minutes = float(info.get("expected_minutes", 90.0))
-        note = (f"shares[{name}] team={info['team']} share={share:.2f} "
-                f"sot90={sot90:.2f} apps={int(apps)}")
+        note = f"{name} share={share:.2f} sot90={sot90:.2f} apps={int(apps)}"
     else:
-        lam_team = max(lam_home, lam_away)   # conservative: assume the stronger side
-        share, sot90, minutes = UNKNOWN_PLAYER_SHARE, UNKNOWN_PLAYER_SOT90, 90.0
-        note = f"UNKNOWN PLAYER {name} — priors used, REVIEW"
-        logger.warning("Player prop for unknown player %r; using priors.", name)
+        lam_team = max(lam_home, lam_away)
+        share, sot90, minutes, on_team = UNKNOWN_PLAYER_SHARE, UNKNOWN_PLAYER_SOT90, 90.0, None
+        note = f"UNKNOWN PLAYER {name} — priors, REVIEW"
+        logger.warning("Player prop for unknown player %r; priors used.", name)
+
     if metric == "PLAYER_GOAL":
         p = anytime_scorer_prob(lam_team, share, minutes)
-    elif metric == "PLAYER_SOT":
-        lam_sot = sot90 * (minutes / 90.0)
-        k = max(int(math.ceil(threshold)), 1)
-        # P(N >= k), Poisson
-        cdf = 0.0
-        term = math.exp(-lam_sot)
-        for i in range(k):
-            cdf += term
-            term *= lam_sot / (i + 1)
-        p = 1.0 - cdf
-    else:
+        return min(max(p, PLAYER_PROP_FLOOR), PLAYER_PROP_CAP), note
+
+    if metric != "PLAYER_SOT":
         raise ValueError(f"Unknown player metric {metric}")
+
+    # --- model estimate: player rate x opponent defense x opportunity ---
+    opp_factor = 1.0
+    if opp_sot_against:
+        opp_factor = max(0.6, min(opp_sot_against / SOT_LEAGUE_AVG, 1.6))
+        note += f" opp_def={opp_factor:.2f}"
+    lam_sot = sot90 * opp_factor * (minutes / 90.0)
+
+    # --- market signal: FanDuel player SHOTS -> SOT (real signal even with no
+    #     SOT market; bridges the "no counterpart" gap the user described) ---
+    if fd_shots:
+        p1 = fd_shots.get("1+_FULL")
+        if p1 and 0 < p1 < 0.999:
+            lam_shots = -math.log(1.0 - p1)              # implied shots rate
+            lam_sot_mkt = lam_shots * SOT_PER_SHOT
+            lam_sot = (1 - MARKET_BLEND) * lam_sot + MARKET_BLEND * lam_sot_mkt
+            note += f" +FD_shots(p1={p1:.2f})"
+
+    p = _poisson_ge(lam_sot, max(int(math.ceil(threshold)), 1))
     return min(max(p, PLAYER_PROP_FLOOR), PLAYER_PROP_CAP), note
 
 

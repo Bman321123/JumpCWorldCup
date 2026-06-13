@@ -52,6 +52,7 @@ class ModelParameters:
     red_rates: Dict[str, float] = field(default_factory=dict)
     offside_rates: Dict[str, float] = field(default_factory=dict)
     sot_rates: Dict[str, float] = field(default_factory=dict)
+    sot_against: Dict[str, float] = field(default_factory=dict)   # opponent SOT conceded
     fouls_rates: Dict[str, float] = field(default_factory=dict)
     half_shares: Dict[str, float] = field(default_factory=lambda: dict(DEFAULT_HALF_SHARES))
     fitted_at: str = ""
