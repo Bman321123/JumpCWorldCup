@@ -123,6 +123,24 @@ class Orchestrator:
                     logger.info("Referee for %s v %s: %s", home, away, referee_id)
             except Exception as e:               # noqa: BLE001
                 logger.warning("Referee lookup skipped: %s", e)
+        # live current events: auto-derive absences from the official XI once
+        # published (~60 min pre-kickoff). Hard structured fact -> auto-applied.
+        if self.odds_sources and not home_absences and not away_absences:
+            try:
+                from .live_context import confirmed_xi, derive_absences
+                xi = confirmed_xi(self.team_names.get(home, home),
+                                  self.team_names.get(away, away))
+                if xi:
+                    home_absences = derive_absences(home, xi.get("home", []),
+                                                    self.players.players)
+                    away_absences = derive_absences(away, xi.get("away", []),
+                                                    self.players.players)
+                    if home_absences or away_absences:
+                        logger.info("Lineup absences: %s=%s %s=%s", home,
+                                    home_absences, away, away_absences)
+            except Exception as e:               # noqa: BLE001
+                logger.warning("Lineup check skipped: %s", e)
+
         ctx = self.resolver.resolve(home, away, match_date, tournament_round,
                                     stadium, referee_id, home_state, away_state)
         ctx.home_absence_mult = self.players.availability_multiplier(home, home_absences or [])
@@ -267,6 +285,11 @@ class Orchestrator:
             hg = ag = avg = DEFAULTS["fouls"]
         else:
             return None
+        # current events reach the ML: a key attacker out lowers the team's
+        # attacking output (corners, shots on target). Cards/fouls unaffected.
+        if family in ("corners", "sot"):
+            hf *= ctx.home_absence_mult
+            af *= ctx.away_absence_mult
         lam = (hf * (ag / avg) + af * (hg / avg)) if self._ML_OPP[family] else hf + af
         lam_h, lam_a = self.engine.expected_goals(q.home_team, q.away_team, ctx)
         k = math.ceil(q.threshold)

@@ -75,7 +75,9 @@ PAGE = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
   <input id="ca" value="CUW" style="width:60px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
   <input id="cd" value="2026-06-13" style="width:120px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
   <button onclick="priceCustom()">Price these</button>
+  <button onclick="checkEvents()" style="background:#475569">Current events</button>
  </div>
+ <div id="eventsresult" style="margin-bottom:8px"></div>
  <textarea id="cq" rows="3" style="width:100%;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:8px;font-size:13px">Will Curaçao commit more fouls than Germany?
 Will Curaçao be caught offside 2 or more times?
 In the second half, will Germany have more shots on target than Curaçao?</textarea>
@@ -144,6 +146,21 @@ async function runAuto(){
  const r=await (await fetch('/api/autopilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})})).json();
  document.getElementById('status').textContent=r.error?('Error: '+r.error):(`Autopilot submitted ${r.submitted} prediction(s) across ${r.matches} match(es).`);
 }
+async function checkEvents(){
+ const home=document.getElementById('ch').value.trim();
+ const away=document.getElementById('ca').value.trim();
+ const box=document.getElementById('eventsresult');
+ box.innerHTML='<span style="color:#94a3b8">Checking status, lineup, news…</span>';
+ const d=await (await fetch(`/api/events?home=${home}&away=${away}`)).json();
+ if(d.error){box.innerHTML='<span style="color:#f87171">'+d.error+'</span>';return;}
+ let h='<div style="font-size:12px;border-left:2px solid #475569;padding-left:8px">';
+ if(d.status) h+=`<div>status: <b>${d.status.postponed?'<span style="color:#f87171">POSTPONED/DELAYED</span>':d.status.state}</b> · ${d.status.detail||''} · ${d.status.venue||''}</div>`;
+ h+=`<div>lineup: ${d.lineup_published?('<b>published</b> — auto-applied'):'<span style="color:#94a3b8">not yet published</span>'}</div>`;
+ if(d.absences && d.absences.length) h+=`<div style="color:#fbbf24">key absences: ${d.absences.join(', ')}</div>`;
+ if(d.news && d.news.length){h+='<div style="margin-top:4px;color:#64748b">news (your judgment — not auto-applied):</div>';
+   d.news.forEach(n=>h+=`<div style="color:#94a3b8">· ${n}</div>`);}
+ box.innerHTML=h+'</div>';
+}
 async function priceCustom(){
  const home=document.getElementById('ch').value.trim();
  const away=document.getElementById('ca').value.trim();
@@ -203,6 +220,10 @@ class Handler(BaseHTTPRequestHandler):
             q = parse_qs(p.query)
             return self._send(200, json.dumps(self._edge(
                 q.get("home", [""])[0], q.get("away", [""])[0], q.get("date", [""])[0])))
+        if p.path == "/api/events":
+            q = parse_qs(p.query)
+            return self._send(200, json.dumps(self._events(
+                q.get("home", [""])[0], q.get("away", [""])[0])))
         return self._send(404, json.dumps({"error": "not found"}))
 
     def do_POST(self):                           # noqa: N802
@@ -306,6 +327,22 @@ class Handler(BaseHTTPRequestHandler):
             return {"submitted": 0, "note": "nothing eligible"}
         result = PlatformClient().submit_batch(payload)
         return {"submitted": len(payload), "result": result}
+
+    def _events(self, home, away):
+        from src.live_context import (confirmed_xi, derive_absences,
+                                      match_status, news_headlines)
+        hn = self.orch.team_names.get(home, home)
+        an = self.orch.team_names.get(away, away)
+        xi = confirmed_xi(hn, an)
+        absences = []
+        if xi:
+            absences = (derive_absences(home, xi.get("home", []),
+                                        self.orch.players.players)
+                        + derive_absences(away, xi.get("away", []),
+                                          self.orch.players.players))
+        return {"status": match_status(hn, an),
+                "lineup_published": xi is not None,
+                "absences": absences, "news": news_headlines(hn, an, 5)}
 
     def _custom(self, home, away, date, questions):
         """Price arbitrary questions for any fixture through the full pipeline."""
