@@ -139,5 +139,12 @@ class PlatformClient:
 
 
 def to_platform_probability(p: float) -> int:
-    """Pipeline [0,1] float -> platform integer percent, clamped to 1-99."""
-    return int(min(max(round(p * 100), 1), 99))
+    """Pipeline [0,1] float -> platform integer percent, clamped to 1-99.
+
+    NEVER returns 50: the platform starts every question at 50 (the no-info
+    anchor), so submitting 50 conveys nothing. We nudge to the nearer side of
+    our actual estimate (51 if we lean over, 49 if under)."""
+    v = int(min(max(round(p * 100), 1), 99))
+    if v == 50:
+        v = 51 if p >= 0.5 else 49
+    return v

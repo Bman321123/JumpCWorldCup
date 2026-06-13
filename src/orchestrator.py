@@ -26,6 +26,7 @@ from .stats_engine import ModelParameters, StatsEngine
 from .types import (Condition, MatchContext, MotivationState, ParsedQuestion,
                     Prediction, QuestionFamily, QuestionParseError, ResultScope,
                     TemporalWindow)
+from .uncertainty import ci_band
 
 logger = logging.getLogger(__name__)
 
@@ -440,6 +441,7 @@ class Orchestrator:
                 "model_calibrated": round(p.p_model_cal, 4),
                 "market_probability": (round(p.p_market, 4)
                                        if p.p_market is not None else None),
+                "ci": ci_band(p.p_final, p.p_model_cal, p.p_market, p.family),
                 "source": p.source, "notes": p.notes,
             } for p in predictions],
         }

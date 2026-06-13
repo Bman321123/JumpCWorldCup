@@ -146,8 +146,9 @@ async function price(name,home,away,date){
    `<button onclick="doSubmit('all')">Submit all ${d.rows.length}</button>
     <button class="ghost" onclick="doSubmit('auto')">Submit ${autoN} auto-eligible</button>`;
  document.getElementById('table').innerHTML='<div class="card" style="padding:6px 10px">'+
-   `<table><thead><tr><th class="q">question</th><th class="n">ours</th><th class="n">market</th><th class="n">crowd</th><th>edge vs crowd</th><th>confidence</th></tr></thead><tbody>`+
-   d.rows.map(rowHTML).join('')+`</tbody></table></div>`;
+   `<table><thead><tr><th class="q">question</th><th class="n">ours</th><th class="n">95% CI</th><th class="n">market</th><th class="n">crowd</th><th>edge vs crowd</th></tr></thead><tbody>`+
+   d.rows.map(rowHTML).join('')+`</tbody></table></div>`
+   +'<div class="sub" style="margin-top:8px">95% CI = how wide our uncertainty is. Tight (±5%) where a sharp market anchors us; wide (±20%+) on model-only props. AUTO = clears the autopilot bar.</div>';
 }
 function pct(v){return v!=null?(v*100).toFixed(0)+'%':'<span class="flat">—</span>';}
 function edgeCell(x){
@@ -156,12 +157,19 @@ function edgeCell(x){
  const arrow=Math.abs(d)<0.04?'≈':(d>0?'▲':'▼');
  return `<span class="${cls}">${arrow} ${(d*100>0?'+':'')}${(d*100).toFixed(0)}</span> <span class="flat" style="font-size:11px">${x.opp_label||''}</span>`;
 }
+function ciCell(x){
+ if(!x.ci) return '—';
+ const hw=Math.round(x.ci.halfwidth*100);
+ const lo=Math.round(x.ci.low*100), hi=Math.round(x.ci.high*100);
+ const wide=hw>=18?'below':(hw<=8?'above':'flat');
+ return `<span class="${wide}">±${hw}%</span> <span class="flat" style="font-size:11px">[${lo}–${hi}]</span>`;
+}
 function rowHTML(x){
- const w=Math.round((x.confidence||0)*54);
- return `<tr><td class="q">${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
-  <td class="n ours">${x.submit}%</td><td class="n">${pct(x.market)}</td><td class="n">${pct(x.crowd)}</td>
-  <td>${edgeCell(x)}</td>
-  <td><span class="conf" style="width:${w}px"></span><span class="confbg" style="width:${54-w}px"></span> <span class="${x.auto?'auto':'hand'}">${x.auto?'AUTO':'hand'}</span></td></tr>`;
+ const tag=x.auto?'<span class="auto"> AUTO</span>':'';
+ return `<tr><td class="q">${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}${tag}</td>
+  <td class="n ours">${x.submit}%</td><td class="n">${ciCell(x)}</td>
+  <td class="n">${pct(x.market)}</td><td class="n">${pct(x.crowd)}</td>
+  <td>${edgeCell(x)}</td></tr>`;
 }
 async function doSubmit(which){
  if(!CUR)return;
@@ -201,9 +209,10 @@ async function priceCustom(){
  const d=await (await fetch('/api/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({home,away,date,questions})})).json();
  if(d.error){box.innerHTML='<span style="color:#f87171">Error: '+d.error+'</span>';return;}
  box.innerHTML=`<div style="color:var(--mut);font-size:11px;margin-bottom:8px">${home} vs ${away} · λ ${d.lam_home}/${d.lam_away} · ${d.market?'market live':'model only'}</div>`+
-  `<table><thead><tr><th class="q">question</th><th class="n">probability</th><th class="n">model</th><th class="n">market</th><th>source</th></tr></thead><tbody>`+
+  `<table><thead><tr><th class="q">question</th><th class="n">probability</th><th class="n">95% CI</th><th class="n">model</th><th class="n">market</th><th>source</th></tr></thead><tbody>`+
   d.rows.map(x=>`<tr><td class="q">${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
     <td class="n ours">${(x.final*100).toFixed(0)}%</td>
+    <td class="n">${ciCell(x)}</td>
     <td class="n">${(x.model*100).toFixed(0)}%</td><td class="n">${x.market!=null?(x.market*100).toFixed(0)+'%':'<span class="flat">—</span>'}</td>
     <td class="flat" style="font-size:11px">${x.source}</td></tr>`).join('')+`</tbody></table>`;
 }
@@ -334,7 +343,7 @@ class Handler(BaseHTTPRequestHandler):
             rows.append({"market_id": mk["id"], "question": pred["question_text"],
                          "model": pred["model_probability"],
                          "market": pred["market_probability"], "crowd": crowd_p,
-                         "submit": sv,
+                         "submit": sv, "ci": pred["ci"],
                          "opportunity": rbp_opportunity(
                              pred["final_probability"], crowd_p),
                          "opp_label": opportunity_label(
@@ -411,7 +420,7 @@ class Handler(BaseHTTPRequestHandler):
             rows.append({"question": pred["question_text"],
                          "model": pred["model_probability"],
                          "market": pred["market_probability"],
-                         "final": final,
+                         "final": final, "ci": pred["ci"],
                          "source": pred["source"],
                          "flag": "FALLBACK" if pred["source"] == "fallback" else ""})
         return {"lam_home": manifest["model_params"]["lambda_home"],
