@@ -68,6 +68,19 @@ PAGE = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
  <button id="armbtn" onclick="toggleArm()">…</button>
  <button onclick="runAuto()" id="autobtn">Submit auto-eligible (all matches)</button>
 </div>
+<div class="card" style="background:#111c33;border:1px solid #1e3a5f;border-radius:10px;padding:14px;margin-bottom:18px">
+ <div style="font-weight:600;color:#7dd3fc;margin-bottom:8px">Custom questions (price any questions for any fixture)</div>
+ <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+  <input id="ch" value="GER" style="width:60px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
+  <input id="ca" value="CUW" style="width:60px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
+  <input id="cd" value="2026-06-13" style="width:120px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
+  <button onclick="priceCustom()">Price these</button>
+ </div>
+ <textarea id="cq" rows="3" style="width:100%;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:8px;font-size:13px">Will Curaçao commit more fouls than Germany?
+Will Curaçao be caught offside 2 or more times?
+In the second half, will Germany have more shots on target than Curaçao?</textarea>
+ <div id="customresult" style="margin-top:10px"></div>
+</div>
 <div class="matches" id="matches">loading matches…</div>
 <div id="status"></div>
 <div id="actions"></div>
@@ -131,6 +144,23 @@ async function runAuto(){
  const r=await (await fetch('/api/autopilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})})).json();
  document.getElementById('status').textContent=r.error?('Error: '+r.error):(`Autopilot submitted ${r.submitted} prediction(s) across ${r.matches} match(es).`);
 }
+async function priceCustom(){
+ const home=document.getElementById('ch').value.trim();
+ const away=document.getElementById('ca').value.trim();
+ const date=document.getElementById('cd').value.trim();
+ const questions=document.getElementById('cq').value.split('\n').map(s=>s.trim()).filter(s=>s);
+ const box=document.getElementById('customresult');
+ box.innerHTML='<span style="color:#94a3b8">Pricing through the full pipeline (~20s)…</span>';
+ const d=await (await fetch('/api/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({home,away,date,questions})})).json();
+ if(d.error){box.innerHTML='<span style="color:#f87171">Error: '+d.error+'</span>';return;}
+ box.innerHTML=`<div style="color:#64748b;font-size:11px;margin-bottom:6px">${home} vs ${away} · lambdas ${d.lam_home}/${d.lam_away} · ${d.market?'market live':'model only'}</div>`+
+  `<table><tr><th>question</th><th>probability</th><th>model</th><th>market</th><th>source</th></tr>`+
+  d.rows.map(x=>{const mkt=x.market!=null?(x.market*100).toFixed(1)+'%':'—';
+   return `<tr><td>${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
+    <td class="n submit" style="font-size:15px">${(x.final*100).toFixed(1)}%</td>
+    <td class="n">${(x.model*100).toFixed(1)}%</td><td class="n">${mkt}</td>
+    <td>${x.source}</td></tr>`;}).join('')+`</table>`;
+}
 refreshStatus();loadMatches();
 </script></body></html>"""
 
@@ -190,6 +220,10 @@ class Handler(BaseHTTPRequestHandler):
                     body.get("which", "all"))))
             if p.path == "/api/autopilot":
                 return self._send(200, json.dumps(self._autopilot()))
+            if p.path == "/api/custom":
+                return self._send(200, json.dumps(self._custom(
+                    body["home"], body["away"], body["date"],
+                    body.get("questions", []))))
         except Exception as e:                   # noqa: BLE001
             return self._send(200, json.dumps({"error": str(e)}))
         return self._send(404, json.dumps({"error": "not found"}))
@@ -272,6 +306,28 @@ class Handler(BaseHTTPRequestHandler):
             return {"submitted": 0, "note": "nothing eligible"}
         result = PlatformClient().submit_batch(payload)
         return {"submitted": len(payload), "result": result}
+
+    def _custom(self, home, away, date, questions):
+        """Price arbitrary questions for any fixture through the full pipeline."""
+        if not questions:
+            return {"error": "no questions provided"}
+        manifest = self.orch.predict_match(home, away, date, questions, "group")
+        crowd = latest_crowd(DB) if Path(DB).exists() else {}
+        rows = []
+        for pred in manifest["predictions"]:
+            hitc = fuzzy_lookup(pred["question_text"], crowd)
+            crowd_p = hitc["crowd_pct"] / 100.0 if hitc else None
+            final = submission(pred["final_probability"], crowd_p,
+                               pred["question_family"], "neutral")
+            rows.append({"question": pred["question_text"],
+                         "model": pred["model_probability"],
+                         "market": pred["market_probability"],
+                         "final": final,
+                         "source": pred["source"],
+                         "flag": "FALLBACK" if pred["source"] == "fallback" else ""})
+        return {"lam_home": manifest["model_params"]["lambda_home"],
+                "lam_away": manifest["model_params"]["lambda_away"],
+                "market": manifest["market_available"], "rows": rows}
 
     def _autopilot(self):
         crit = load_criteria(str(AUTO_CFG))
