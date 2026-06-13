@@ -65,6 +65,11 @@ class Orchestrator:
         self.blender = EnsembleBlender()
         self.validator = GuardrailValidator()
         self.players = PlayerShares(player_shares_path)
+        # Gated ML micro-models: load if present, but only ACTIVE if they passed
+        # their ship-gate at train time (corner GBM currently fails -> inactive,
+        # corners stay structural; a future retrain auto-activates it).
+        from .ml_models import CornerMLModel
+        self.corner_ml = CornerMLModel(str(Path(params_path).parent / "ml_corners.joblib"))
         self.db_path = db_path
         # Odds hierarchy: scraped sharp books first (free), The Odds API as
         # fallback only if a key is configured, else pure model.
@@ -193,8 +198,17 @@ class Orchestrator:
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)
         if f == QuestionFamily.CORNER_MARKET:
-            return self.engine.corner_market(q.home_team, q.away_team, q.target,
-                                             q.threshold, q.condition, q.window, ctx)
+            struct = self.engine.corner_market(q.home_team, q.away_team, q.target,
+                                               q.threshold, q.condition, q.window, ctx)
+            # gated ML override for full-match total corners (inactive unless the
+            # corner GBM passed its ship-gate; today it does not, so this is a no-op)
+            if (self.corner_ml.active and q.target == "MATCH"
+                    and q.window == TemporalWindow.FULL
+                    and q.condition in (Condition.GTE, Condition.LT)):
+                ml = self._corner_ml_prob(q, ctx)
+                if ml is not None:
+                    return ml if q.condition == Condition.GTE else 1.0 - ml
+            return struct
         if f == QuestionFamily.CARD_MARKET:
             ref_mult = self.resolver.referees.multiplier(ctx.referee_id, q.metric)
             return self.engine.card_market(q.home_team, q.away_team, q.target,
@@ -204,6 +218,23 @@ class Orchestrator:
             return self.engine.offside_market(q.home_team, q.away_team, q.target,
                                               q.threshold, q.condition, q.window, ctx)
         raise ValueError(f"No model dispatch for family {f}")
+
+    def _corner_ml_prob(self, q: ParsedQuestion, ctx: MatchContext):
+        """Build the ML feature vector for total-corners P(over threshold)."""
+        import math
+        from scipy.stats import poisson
+        from .stats_engine import DEFAULTS
+        p = self.engine.p
+        hcf = p.corner_for.get(q.home_team, DEFAULTS["corner_for"])
+        hca = p.corner_against.get(q.home_team, DEFAULTS["corner_against"])
+        acf = p.corner_for.get(q.away_team, DEFAULTS["corner_for"])
+        aca = p.corner_against.get(q.away_team, DEFAULTS["corner_against"])
+        lam_h, lam_a = self.engine.corner_lambdas(q.home_team, q.away_team, ctx)
+        lam = lam_h + lam_a
+        k = math.ceil(q.threshold)
+        struct_over = float(1.0 - poisson.cdf(k - 1, lam))
+        return self.corner_ml.prob_over(hcf, hca, acf, aca, lam, q.threshold,
+                                        struct_over)
 
     def _market_prob(self, q: ParsedQuestion, market: Optional[dict]) -> Optional[float]:
         if not market:
