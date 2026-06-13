@@ -29,7 +29,8 @@ from src.auto_trader import load_criteria, plan_submissions       # noqa: E402
 from src.crowd_capture import fuzzy_lookup, latest_crowd          # noqa: E402
 from src.orchestrator import Orchestrator                         # noqa: E402
 from src.platform_client import PlatformClient, to_platform_probability  # noqa: E402
-from src.submission_policy import submission                      # noqa: E402
+from src.submission_policy import (opportunity_label,            # noqa: E402
+                                   rbp_opportunity, submission)
 
 LOBBY_ID = "8df8038c-fd2c-4a5f-be4e-0e11d5966c05"
 DB = str(ROOT / "data" / "wc_forecasting.db")
@@ -39,54 +40,71 @@ _cache: dict = {}
 PAGE = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Probability Cup — Control Panel</title>
 <style>
- body{font-family:system-ui,sans-serif;background:#0b1220;color:#e2e8f0;margin:0;padding:24px}
- h1{font-size:18px;color:#4f8cff;margin:0 0 4px}
- .sub{color:#64748b;font-size:12px;margin-bottom:14px}
- .bar{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
- .pill{background:#111c33;border:1px solid #1e3a5f;border-radius:20px;padding:5px 12px;font-size:12px}
- .armed{border-color:#7f1d1d;color:#fca5a5} .disarmed{border-color:#14532d;color:#86efac}
- .matches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
- .m{background:#111c33;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px}
- .m:hover{border-color:#4f8cff}.m .t{color:#94a3b8;font-size:11px}
+ :root{--bg:#0a0f1c;--card:#111a2e;--line:#1e2c47;--mut:#7c8aa5;--ink:#e7edf7;--accent:#5b9dff}
+ *{box-sizing:border-box}
+ body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:28px;max-width:1180px;margin:0 auto}
+ h1{font-size:20px;margin:0 0 2px;letter-spacing:-.01em}
+ h1 span{color:var(--accent)}
+ .sub{color:var(--mut);font-size:12.5px;margin-bottom:20px}
+ .bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+ .pill{border-radius:20px;padding:6px 13px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+ .armed{border-color:#7f1d1d;color:#fca5a5;background:#1c0f12}
+ .disarmed{border-color:#14532d;color:#86efac;background:#0c1a12}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+ .card h2{font-size:13px;font-weight:600;color:var(--accent);margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em}
+ .matches{display:flex;flex-wrap:wrap;gap:8px}
+ .m{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;font-size:13px;font-weight:500;transition:.12s}
+ .m:hover{border-color:var(--accent);transform:translateY(-1px)}
+ .m .t{color:var(--mut);font-size:10.5px;font-weight:400;margin-top:2px}
  table{width:100%;border-collapse:collapse;font-size:13px}
- th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #1a2942}
- th{color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase}
+ th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+ tr:last-child td{border-bottom:none}
+ th{color:var(--mut);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+ tbody tr:hover{background:#0e1830}
  td.n{text-align:right;font-variant-numeric:tabular-nums}
- .submit{font-weight:700;color:#7dd3fc}.edge-hi{color:#4ade80;font-weight:700}
- .auto{color:#4ade80}.hand{color:#fbbf24}.flag{color:#f87171;font-size:11px}
- button{background:#4f8cff;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer;font-size:13px}
- button:hover{background:#3b7af0}button.warn{background:#b91c1c}button.warn:hover{background:#991b1b}
- button:disabled{background:#334155;cursor:not-allowed}
- #status{color:#94a3b8;font-size:12px;margin:10px 0}
- .barf{display:inline-block;height:8px;border-radius:2px;background:#4f8cff;vertical-align:middle}
- .barr{display:inline-block;height:8px;border-radius:2px;background:#334155;vertical-align:middle}
+ .ours{font-weight:800;font-size:15px;color:#bfe0ff}
+ .q{max-width:430px}
+ .above{color:#4ade80;font-weight:700}.below{color:#fbbf24;font-weight:700}.flat{color:var(--mut)}
+ .auto{color:#4ade80;font-weight:600;font-size:11px}.hand{color:#94a3b8;font-size:11px}
+ .flag{color:#f87171;font-size:10px;font-weight:700;background:#2a1115;padding:1px 5px;border-radius:4px;margin-left:4px}
+ button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:13px;transition:.12s}
+ button:hover{filter:brightness(1.1)}button.warn{background:#b91c1c}button.ghost{background:#26344f}
+ button:disabled{background:#26344f;color:#5b6b88;cursor:not-allowed}
+ input,textarea{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;font-family:inherit}
+ #status{color:var(--mut);font-size:12.5px;margin:14px 2px}
+ .conf{display:inline-block;height:6px;border-radius:3px;background:var(--accent)}
+ .confbg{display:inline-block;height:6px;border-radius:3px;background:#26344f}
+ .actions{display:flex;gap:8px;margin:6px 0 4px}
 </style></head><body>
-<h1>Probability Cup — Control Panel</h1>
-<div class="sub">model vs sharp market vs crowd, with the policy SUBMIT value. You submit; nothing is sent without your click.</div>
+<h1><span>◆</span> Probability Cup — Control Panel</h1>
+<div class="sub">Our calibrated number vs the sharp market vs the crowd. The crowd is an <b>opportunity signal</b>, never an anchor — edge is where we beat it. Nothing is submitted without your click.</div>
 <div class="bar">
  <span class="pill" id="armpill">autopilot: …</span>
  <button id="armbtn" onclick="toggleArm()">…</button>
  <button onclick="runAuto()" id="autobtn">Submit auto-eligible (all matches)</button>
 </div>
-<div class="card" style="background:#111c33;border:1px solid #1e3a5f;border-radius:10px;padding:14px;margin-bottom:18px">
- <div style="font-weight:600;color:#7dd3fc;margin-bottom:8px">Custom questions (price any questions for any fixture)</div>
- <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-  <input id="ch" value="GER" style="width:60px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
-  <input id="ca" value="CUW" style="width:60px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
-  <input id="cd" value="2026-06-13" style="width:120px;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:6px">
+<div class="card">
+ <h2>Open matches — click to price</h2>
+ <div class="matches" id="matches">loading matches…</div>
+</div>
+<div id="status"></div>
+<div class="actions" id="actions"></div>
+<div id="table"></div>
+<div class="card" style="margin-top:22px">
+ <h2>Custom questions — price anything for any fixture</h2>
+ <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+  <input id="ch" value="GER" style="width:64px" placeholder="home">
+  <input id="ca" value="CUW" style="width:64px" placeholder="away">
+  <input id="cd" value="2026-06-13" style="width:124px">
   <button onclick="priceCustom()">Price these</button>
-  <button onclick="checkEvents()" style="background:#475569">Current events</button>
+  <button class="ghost" onclick="checkEvents()">Current events</button>
  </div>
  <div id="eventsresult" style="margin-bottom:8px"></div>
- <textarea id="cq" rows="3" style="width:100%;background:#0b1220;color:#e2e8f0;border:1px solid #1e3a5f;border-radius:6px;padding:8px;font-size:13px">Will Curaçao commit more fouls than Germany?
+ <textarea id="cq" rows="3" style="width:100%">Will Curaçao commit more fouls than Germany?
 Will Curaçao be caught offside 2 or more times?
 In the second half, will Germany have more shots on target than Curaçao?</textarea>
- <div id="customresult" style="margin-top:10px"></div>
+ <div id="customresult" style="margin-top:12px"></div>
 </div>
-<div class="matches" id="matches">loading matches…</div>
-<div id="status"></div>
-<div id="actions"></div>
-<div id="table"></div>
 <script>
 let CUR=null;
 async function refreshStatus(){
@@ -119,19 +137,25 @@ async function price(name,home,away,date){
  document.getElementById('status').textContent=name+'  ·  lambdas '+d.lam_home+' / '+d.lam_away+'  ·  '+(d.market?'market live':'model only');
  const autoN=d.rows.filter(r=>r.auto).length;
  document.getElementById('actions').innerHTML=
-   `<button onclick="doSubmit('all')">Submit all ${d.rows.length} to platform</button>
-    <button onclick="doSubmit('auto')">Submit ${autoN} auto-eligible</button>`;
- document.getElementById('table').innerHTML=
-   `<table><tr><th>question</th><th>model</th><th>market</th><th>crowd</th><th>submit</th><th>edge</th><th>conf</th></tr>`+
-   d.rows.map(x=>{
-    const crowd=x.crowd!=null?(x.crowd*100).toFixed(0)+'%':'—';
-    const mkt=x.market!=null?(x.market*100).toFixed(0)+'%':'—';
-    const edge=x.edge!=null?(x.edge*100).toFixed(0):'—';
-    const w=Math.round((x.confidence||0)*60);
-    return `<tr><td>${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
-     <td class="n">${(x.model*100).toFixed(0)}%</td><td class="n">${mkt}</td><td class="n">${crowd}</td>
-     <td class="n submit">${x.submit}%</td><td class="n ${(x.edge>0.1?'edge-hi':'')}">${edge}</td>
-     <td><span class="barf" style="width:${w}px"></span><span class="barr" style="width:${60-w}px"></span> <span class="${x.auto?'auto':'hand'}">${x.auto?'AUTO':'hand'}</span></td></tr>`;}).join('')+`</table>`;
+   `<button onclick="doSubmit('all')">Submit all ${d.rows.length}</button>
+    <button class="ghost" onclick="doSubmit('auto')">Submit ${autoN} auto-eligible</button>`;
+ document.getElementById('table').innerHTML='<div class="card" style="padding:6px 10px">'+
+   `<table><thead><tr><th class="q">question</th><th class="n">ours</th><th class="n">market</th><th class="n">crowd</th><th>edge vs crowd</th><th>confidence</th></tr></thead><tbody>`+
+   d.rows.map(rowHTML).join('')+`</tbody></table></div>`;
+}
+function pct(v){return v!=null?(v*100).toFixed(0)+'%':'<span class="flat">—</span>';}
+function edgeCell(x){
+ if(x.opportunity==null) return '<span class="flat">no crowd</span>';
+ const d=x.opportunity, cls=Math.abs(d)<0.04?'flat':(d>0?'above':'below');
+ const arrow=Math.abs(d)<0.04?'≈':(d>0?'▲':'▼');
+ return `<span class="${cls}">${arrow} ${(d*100>0?'+':'')}${(d*100).toFixed(0)}</span> <span class="flat" style="font-size:11px">${x.opp_label||''}</span>`;
+}
+function rowHTML(x){
+ const w=Math.round((x.confidence||0)*54);
+ return `<tr><td class="q">${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
+  <td class="n ours">${x.submit}%</td><td class="n">${pct(x.market)}</td><td class="n">${pct(x.crowd)}</td>
+  <td>${edgeCell(x)}</td>
+  <td><span class="conf" style="width:${w}px"></span><span class="confbg" style="width:${54-w}px"></span> <span class="${x.auto?'auto':'hand'}">${x.auto?'AUTO':'hand'}</span></td></tr>`;
 }
 async function doSubmit(which){
  if(!CUR)return;
@@ -170,13 +194,12 @@ async function priceCustom(){
  box.innerHTML='<span style="color:#94a3b8">Pricing through the full pipeline (~20s)…</span>';
  const d=await (await fetch('/api/custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({home,away,date,questions})})).json();
  if(d.error){box.innerHTML='<span style="color:#f87171">Error: '+d.error+'</span>';return;}
- box.innerHTML=`<div style="color:#64748b;font-size:11px;margin-bottom:6px">${home} vs ${away} · lambdas ${d.lam_home}/${d.lam_away} · ${d.market?'market live':'model only'}</div>`+
-  `<table><tr><th>question</th><th>probability</th><th>model</th><th>market</th><th>source</th></tr>`+
-  d.rows.map(x=>{const mkt=x.market!=null?(x.market*100).toFixed(1)+'%':'—';
-   return `<tr><td>${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
-    <td class="n submit" style="font-size:15px">${(x.final*100).toFixed(1)}%</td>
-    <td class="n">${(x.model*100).toFixed(1)}%</td><td class="n">${mkt}</td>
-    <td>${x.source}</td></tr>`;}).join('')+`</table>`;
+ box.innerHTML=`<div style="color:var(--mut);font-size:11px;margin-bottom:8px">${home} vs ${away} · λ ${d.lam_home}/${d.lam_away} · ${d.market?'market live':'model only'}</div>`+
+  `<table><thead><tr><th class="q">question</th><th class="n">probability</th><th class="n">model</th><th class="n">market</th><th>source</th></tr></thead><tbody>`+
+  d.rows.map(x=>`<tr><td class="q">${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
+    <td class="n ours">${(x.final*100).toFixed(0)}%</td>
+    <td class="n">${(x.model*100).toFixed(0)}%</td><td class="n">${x.market!=null?(x.market*100).toFixed(0)+'%':'<span class="flat">—</span>'}</td>
+    <td class="flat" style="font-size:11px">${x.source}</td></tr>`).join('')+`</tbody></table>`;
 }
 refreshStatus();loadMatches();
 </script></body></html>"""
@@ -297,8 +320,10 @@ class Handler(BaseHTTPRequestHandler):
                          "model": pred["model_probability"],
                          "market": pred["market_probability"], "crowd": crowd_p,
                          "submit": sv,
-                         "edge": (abs(pred["final_probability"] - crowd_p)
-                                  if crowd_p is not None else None),
+                         "opportunity": rbp_opportunity(
+                             pred["final_probability"], crowd_p),
+                         "opp_label": opportunity_label(
+                             pred["final_probability"], crowd_p),
                          "flag": "FALLBACK" if pred["source"] == "fallback" else ""})
         decisions = {d.question_id: d for d in plan_submissions(
             manifest, submit_values, load_criteria(str(AUTO_CFG)))}
