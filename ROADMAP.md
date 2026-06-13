@@ -62,6 +62,62 @@ see the future during training, (c) verify it on matches it has never seen.
       pass it. Families that never pass keep running the structural logic — that
       is a feature, not a failure.
 
+## EXECUTION PLAN — remaining work to "best version" (ordered)
+
+Status of the three things asked for on June 13:
+- ☑ **Localhost dashboard** — `python tools/dashboard.py` → http://127.0.0.1:8770.
+  Lists open matches, prices any one through the full pipeline, shows
+  model/market/crowd/SUBMIT/edge/confidence + auto-vs-hand.
+- ☑ **Autonomous submission engine** — `src/auto_trader.py` + `tools/autopilot.py`.
+  Scores its own confidence per question; submits only the eligible ones, and
+  only when `config/auto_trade.json` `armed=true` AND `--go`. **Ships DISARMED.
+  Claude will not arm it — that is a human decision after watching dry runs.**
+
+Remaining, in priority order:
+
+### A. Player involvement shares  (unblocks the weakest numbers on every sheet)
+Player props (Afif, Xhaka, …) run on flat 0.67 priors today — confidence 0.0,
+never auto-eligible, and the biggest accuracy hole.
+1. Pull per-player season stats (minutes, goals, shots on target, xG/xA) from
+   ESPN athlete endpoints + FBref player pages for the ~250 players on the 48
+   squads. Source pattern already proven in `ingestion/ingest_espn.py`.
+2. Compute involvement share = player (xG+xA)/team total while on pitch; SOT/90;
+   expected minutes (starter vs rotation from recent lineups).
+3. Write `config/player_shares.json`; the player layer + 0.85 cap already consume it.
+4. Effect: anytime-scorer and player-SOT props become real estimates with
+   non-zero confidence → auto-eligible when sharp or validated.
+
+### B. Referee card table  (biggest missing card signal)
+1. Scrape FIFA's 2026 referee appointment list + career cards-per-match
+   (worldfootball.net / ESPN officials data per match).
+2. Populate `config/referee_table.json`; multipliers already wired, shrink <10 matches.
+3. Effect: card and booking markets stop assuming league-average referees.
+
+### C. ML model v2  (the "finish the ML model" ask — see Phase 2 below)
+The structural model is now strong, which is exactly what makes the ML layer
+worth finishing: it learns *residuals* on top. Gated, so it only ships where it
+wins. Concrete steps:
+1. Feature store v2 wiring (`ml/feature_store.py` exists; extend to all families):
+   add the Phase-A/B data + **devigged Pinnacle line as a feature** (highest value)
+   + per-team micro rates (now available) + context.
+2. Pool the club corpus (football-data.co.uk, ~40k matches with odds + corners/cards)
+   for training volume.
+3. Retrain per family with walk-forward + the existing ship-gate. Expectation:
+   passes for corners/cards/totals where markets are thin; stays benched for 1X2.
+4. Blend ML into the stack where it passes; structural stays the fallback.
+
+### D. Odds redundancy + ops
+- Pin DraftKings event-group id + FanDuel page id (`config/scrapers.json`); verify live.
+- Feed live group standings to the motivation Monte Carlo before matchday 2.
+- Nightly cron: `ingest_espn.py --comps WC2026` → `run_fbref_scrape.py --aggregate-only`
+  → `compute_parameters.py` → `train_calibrators.py` → `sync_results.py`.
+
+### E. Arm the autopilot  (only after A–D and a clean dry-run record)
+When the dashboard + autopilot dry runs look right for several matchdays, set
+`config/auto_trade.json` `armed=true` yourself. Recommended first criteria stay
+conservative: group stage only, market-anchored or validated families,
+confidence ≥ 0.70, deviation from market ≤ 0.15. Loosen as the log proves out.
+
 ## Phase 3 — Decision layer (June 20–26)
 
 - 3.1 **Edge report** per match: every question with market prob, ML prob,

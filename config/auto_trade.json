@@ -1,0 +1,10 @@
+{
+  "_DANGER": "armed=true lets the bot submit live bets with NO human review. Keep false until you have watched dry runs and trust them. Claude will not flip this.",
+  "armed": false,
+  "min_confidence": 0.70,
+  "max_round_weight": 1.0,
+  "max_deviation_from_market": 0.15,
+  "require_market_or_validated": true,
+  "exclude_families": ["PLAYER_MARKET"],
+  "max_submissions_per_match": 10
+}
