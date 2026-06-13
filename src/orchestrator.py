@@ -366,6 +366,11 @@ class Orchestrator:
                          else market.get("h1_totals", {}) if q.window.value == "H1"
                          else {})
                 return self._totals_lookup(table, q.threshold, q.condition)
+            # team goal totals ("Will X score at least N goals?") via FD team totals
+            if (q.metric == "GOALS" and q.target in ("HOME", "AWAY")
+                    and q.window.value == "FULL"):
+                table = market.get(f"team_totals_{q.target.lower()}", {})
+                return self._totals_lookup(table, q.threshold, q.condition)
         if (q.family == QuestionFamily.CORNER_MARKET and q.target == "MATCH"
                 and q.condition in (Condition.GTE, Condition.LT)):
             table = (market.get("corner_totals", {}) if q.window.value == "FULL"

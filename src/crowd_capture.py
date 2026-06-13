@@ -130,7 +130,7 @@ def latest_crowd(db_path: str, hours: float = 36.0) -> Dict[str, dict]:
 
 
 def fuzzy_lookup(question_text: str, crowd: Dict[str, dict],
-                 min_ratio: float = 0.85) -> Optional[dict]:
+                 min_ratio: float = 0.93) -> Optional[dict]:
     norm = normalize_question(question_text)
     if norm in crowd:
         return crowd[norm]

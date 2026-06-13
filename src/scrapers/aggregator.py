@@ -159,9 +159,24 @@ def aggregate(books: List[BookOdds], home, away) -> Optional[dict]:
     out: dict = {"h2h": None, "totals": {}, "h1_totals": {}, "btts": None,
                  "corner_totals": {}, "h1_corner_totals": {},
                  "booking_totals": {}, "h1_booking_totals": {},
+                 "team_totals_home": {}, "team_totals_away": {},
                  "player_shots": {},
                  "books": [b.book for b in ordered],
                  "kickoff": next((b.kickoff for b in ordered if b.kickoff), None)}
+
+    # team goal totals (side-specific — respect each book's team order)
+    for b in ordered:
+        fl = flipped(b)
+        for our_side, bf in (("home", "team_totals_away" if fl else "team_totals_home"),
+                             ("away", "team_totals_home" if fl else "team_totals_away")):
+            tgt = out[f"team_totals_{our_side}"]
+            for line, (over, under) in getattr(b, bf).items():
+                try:
+                    p_over = float(shin_devig(decimal_to_implied([over, under]))[0])
+                except ValueError:
+                    continue
+                if b.book == "pinnacle" or line not in tgt:
+                    tgt[line] = p_over
 
     # player shot markets (FanDuel) — keyed by player name -> {"1+_FULL": prob}
     for b in ordered:

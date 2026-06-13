@@ -87,6 +87,12 @@ PAGE = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
  <h2>Open matches — click to price</h2>
  <div class="matches" id="matches">loading matches…</div>
 </div>
+<div class="card">
+ <h2>Crowd % — paste from the SportsPredict site (not in any API)</h2>
+ <div class="sub" style="margin:-4px 0 10px">Copy the question text + the community/crowd % from the site and paste here. We store it and the <b>edge vs crowd</b> column lights up on the next pricing.</div>
+ <textarea id="crowdpaste" rows="3" style="width:100%" placeholder="Will Switzerland win the match?  51%&#10;Will both teams score?  38%"></textarea>
+ <div style="margin-top:8px"><button class="ghost" onclick="saveCrowd()">Save crowd %s</button> <span id="crowdmsg" class="sub"></span></div>
+</div>
 <div id="status"></div>
 <div class="actions" id="actions"></div>
 <div id="table"></div>
@@ -201,6 +207,13 @@ async function priceCustom(){
     <td class="n">${(x.model*100).toFixed(0)}%</td><td class="n">${x.market!=null?(x.market*100).toFixed(0)+'%':'<span class="flat">—</span>'}</td>
     <td class="flat" style="font-size:11px">${x.source}</td></tr>`).join('')+`</tbody></table>`;
 }
+async function saveCrowd(){
+ const text=document.getElementById('crowdpaste').value;
+ document.getElementById('crowdmsg').textContent='saving…';
+ const r=await (await fetch('/api/crowd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})).json();
+ document.getElementById('crowdmsg').textContent=r.error?('error: '+r.error):(`stored ${r.stored} crowd value(s) — re-price a match to see the edge`);
+ if(CUR) price(CUR.name,CUR.home,CUR.away,CUR.date);
+}
 refreshStatus();loadMatches();
 </script></body></html>"""
 
@@ -268,6 +281,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, json.dumps(self._custom(
                     body["home"], body["away"], body["date"],
                     body.get("questions", []))))
+            if p.path == "/api/crowd":
+                return self._send(200, json.dumps(self._crowd(body.get("text", ""))))
         except Exception as e:                   # noqa: BLE001
             return self._send(200, json.dumps({"error": str(e)}))
         return self._send(404, json.dumps({"error": "not found"}))
@@ -352,6 +367,18 @@ class Handler(BaseHTTPRequestHandler):
             return {"submitted": 0, "note": "nothing eligible"}
         result = PlatformClient().submit_batch(payload)
         return {"submitted": len(payload), "result": result}
+
+    def _crowd(self, text):
+        """Store crowd %s pasted from the SportsPredict site (the crowd is not
+        exposed by any API). Accepts blocks of 'question ... NN%'."""
+        from src.crowd_capture import parse_blocks, store_capture
+        blocks = [b for b in text.split("\n\n") if b.strip()] or text.splitlines()
+        rows = parse_blocks(blocks)
+        n = store_capture(DB, rows, "dashboard-paste") if rows else 0
+        _cache.clear()                          # force re-price so crowd shows
+        return {"stored": n,
+                "samples": [{"q": r["question_text"][:60], "crowd": r["crowd_pct"]}
+                            for r in rows[:8]]}
 
     def _events(self, home, away):
         from src.live_context import (confirmed_xi, derive_absences,

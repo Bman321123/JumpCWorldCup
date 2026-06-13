@@ -117,6 +117,10 @@ def parse_fanduel_markets(markets: dict, home_name: str, away_name: str
             _collect_total(g.h1_totals, runners)
         elif "CORNER" in mt and ("OVER" in mt or "TOTAL" in mt):
             _collect_total(g.corner_totals, runners)
+        elif mt.startswith("HOME_TEAM_OVER/UNDER") and "HALF" not in mt:
+            _collect_team_total(g.team_totals_home, mt, runners)
+        elif mt.startswith("AWAY_TEAM_OVER/UNDER") and "HALF" not in mt:
+            _collect_team_total(g.team_totals_away, mt, runners)
 
         else:
             sm = _PLAYER_SHOTS_RE.search(mt)
@@ -130,7 +134,8 @@ def parse_fanduel_markets(markets: dict, home_name: str, away_name: str
                         # one-sided yes price; shade ~5% overround off implied
                         p = min((1.0 / dec) / 1.05, 0.97)
                         g.player_shots.setdefault(nm, {})[f"{int(thr)}+_{half}"] = p
-    if g.h2h or g.totals or g.btts or g.corner_totals or g.player_shots:
+    if (g.h2h or g.totals or g.btts or g.corner_totals or g.player_shots
+            or g.team_totals_home or g.team_totals_away):
         return g
     return None
 
@@ -147,3 +152,20 @@ def _collect_total(target: dict, runners: list) -> None:
     for line, sides in by_line.items():
         if {"over", "under"} <= set(sides):
             target[line] = (sides["over"], sides["under"])
+
+
+def _collect_team_total(target: dict, market_type: str, runners: list) -> None:
+    """Team totals carry the line in the marketType (HOME_TEAM_OVER/UNDER_1.5)
+    and bare 'Over'/'Under' runner names."""
+    m = re.search(r"_(\d+(?:\.\d+)?)$", market_type)
+    if not m:
+        return
+    line = float(m.group(1))
+    sides = {}
+    for ru in runners:
+        nm = str(ru.get("runnerName", "")).strip().lower()
+        dec = _runner_decimal(ru)
+        if nm in ("over", "under") and dec is not None:
+            sides[nm] = dec
+    if {"over", "under"} <= set(sides):
+        target[line] = (sides["over"], sides["under"])
