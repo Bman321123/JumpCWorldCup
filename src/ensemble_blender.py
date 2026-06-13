@@ -22,6 +22,7 @@ DEFAULT_WEIGHTS: Dict[str, float] = {
     "PLAYER_MARKET": 0.50,
 }
 EARLY_LINE_DISCOUNT = 0.85
+DEFER_GAP = 0.30           # model/market gap at which we fully defer to the sharp line
 
 
 def _logit(p: float) -> float:
@@ -46,6 +47,16 @@ class EnsembleBlender:
         w = self.weights.get(family, 0.5)
         if not is_closing_line:
             w *= EARLY_LINE_DISCOUNT
+        # Market deference: on the markets the sharp line already wins (high base
+        # weight — 1X2, totals, BTTS), a large model/market disagreement means
+        # the model is likely broken for this matchup (sparse international data
+        # compresses favorites). Defer further toward the sharp line as the gap
+        # grows. NOT applied to the thin micro-markets (corners/cards/sot/fouls)
+        # where our gated ML has earned the right to deviate.
+        base = self.weights.get(family, 0.5)
+        if base >= 0.70:
+            gap = abs(market_prob - model_prob)
+            w = w + (1.0 - w) * min(gap / DEFER_GAP, 1.0)
         blended = _expit(w * _logit(market_prob) + (1.0 - w) * _logit(model_prob))
         return blended, f"blend_w{w:.2f}"
 

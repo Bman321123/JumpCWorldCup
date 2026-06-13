@@ -218,6 +218,30 @@ def test_fouls_comparative_and_totals(clf, orch):
     assert 0.1 < p2 < 0.9
 
 
+def test_receive_more_cards_comparative(clf):
+    """'receive/get more cards than' must parse as comparative, not fall back
+    (live bug: BRA vs MAR went to fallback)."""
+    for verb in ("receive", "get", "be shown"):
+        q = clf.parse(f"Will Brazil {verb} more cards than Morocco?",
+                      "BRA", "MAR", "group")
+        assert q.condition == Condition.MORE_THAN_OPP, verb
+        assert q.metric in ("CARDS", "YELLOWS")
+        assert q.target == "HOME"
+
+
+def test_first_goal_of_half_is_a_race_not_team_scores(clf, orch):
+    """'score the first goal of the second half' must be the race (who scores
+    first), priced BELOW 'team scores in the half' for the weaker side."""
+    q = clf.parse("Will Morocco score the first goal of the second half?",
+                  "BRA", "MAR", "group")
+    assert q.metric == "FIRST_IN_HALF|AWAY|H2"
+    first = orch.engine.first_in_window("BRA", "MAR", "AWAY", TemporalWindow.H2)
+    scores = orch.engine.goal_market("BRA", "MAR", "GOALS", "AWAY", 1.0,
+                                     Condition.GTE, TemporalWindow.H2)
+    assert first < scores                 # first-to-score < scores-at-all
+    assert 0.15 < first < 0.45
+
+
 def test_unsupported_compound_flags_not_silently_prices(orch):
     """Unmodeled conjunctions must hit the flagged fallback — pricing one leg
     as if it were the whole question is the silent failure mode."""

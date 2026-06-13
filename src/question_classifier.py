@@ -75,7 +75,8 @@ class QuestionClassifier:
         threshold, condition = self._parse_threshold(text)
 
         # comparative: "will X have/finish with more <metric> than Y" (observed live)
-        comp = re.search(r"\bwill (.+?) (?:have|finish with|end with|record|commit) "
+        comp = re.search(r"\bwill (.+?) (?:have|finish with|end with|record|commit|"
+                         r"receive|get|be shown|pick up|collect|win|take) "
                          r"more ([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
                          text)
         if comp:
@@ -96,6 +97,22 @@ class QuestionClassifier:
                                   home_team, away_team, "MATCH", "BTTS_AND_TOTAL",
                                   threshold, Condition.GTE, window,
                                   ResultScope.NONE, weight)
+
+        # first goal of a HALF (single team, no conjunction): "Will X score the
+        # first goal of the second half?" — a race within that window, NOT the
+        # same as "X scores in the half" (which overprices the weaker team).
+        fgh = re.search(r"\bwill (.+?) score the first goal of the (first|second) half",
+                        text)
+        if fgh and "and" not in fgh.group(0):
+            side = self._find_team(fgh.group(1), home_team, away_team)
+            if side:
+                w = "H1" if fgh.group(2) == "first" else "H2"
+                return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET,
+                                      home_team, away_team, side,
+                                      f"FIRST_IN_HALF|{side}|{w}", 1.0,
+                                      Condition.BINARY_YES,
+                                      TemporalWindow.H1 if w == "H1" else TemporalWindow.H2,
+                                      ResultScope.NONE, weight)
 
         # first-goal compound (live every match): "Will X score the first goal
         # of the game and Y score in the second half?"

@@ -75,6 +75,25 @@ def test_early_line_discount():
     assert p_early > p_close                         # early line trusted less
 
 
+def test_market_deference_on_main_markets():
+    """A compressed model must not drag a sharp 1X2 line. Large gap -> defer."""
+    b = EnsembleBlender()
+    # market 0.58, model 0.36 (the Brazil bug): base weight 0.80
+    p, src = b.blend(0.58, 0.36, "MATCH_RESULT", is_closing_line=True)
+    assert p > 0.54                       # pulled close to the sharp 0.58, not 0.51
+    # small disagreement: normal blend, model still contributes
+    p2, _ = b.blend(0.55, 0.50, "MATCH_RESULT", is_closing_line=True)
+    assert 0.52 < p2 < 0.555
+
+
+def test_no_deference_on_micro_markets():
+    """Thin micro-markets keep the validated model's deviation (low base weight)."""
+    b = EnsembleBlender()
+    # corners base weight 0.40; model 0.30 vs market 0.55 — model must still pull
+    p, _ = b.blend(0.55, 0.30, "CORNER_MARKET", is_closing_line=True)
+    assert p < 0.50                       # model deviation preserved, not deferred away
+
+
 def test_consensus_shrink_bounds():
     b = EnsembleBlender()
     assert b.consensus_shrink(0.7, 0.5, 1.0) == pytest.approx(0.7)

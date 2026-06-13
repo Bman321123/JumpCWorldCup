@@ -89,6 +89,12 @@ class StatsEngine:
 
     def expected_goals(self, home: str, away: str, ctx: Optional[MatchContext] = None
                        ) -> Tuple[float, float]:
+        # market-implied lambdas (when a sharp line exists) replace the
+        # compressed structural estimate; late-news absence multipliers still
+        # apply on top in case they post-date the scraped line.
+        if ctx and ctx.lambda_home_override is not None:
+            return (ctx.lambda_home_override * ctx.home_absence_mult,
+                    ctx.lambda_away_override * ctx.away_absence_mult)
         a_h = self._strength(self.p.attack, home)
         d_h = self._strength(self.p.defense, home)
         a_a = self._strength(self.p.attack, away)
@@ -190,6 +196,21 @@ class StatsEngine:
                                     scorer_side, 1.0, Condition.GTE,
                                     scorer_window, ctx)
         return p_first * p_scores
+
+    def first_in_window(self, home: str, away: str, side: str,
+                        window: TemporalWindow, ctx: Optional[MatchContext] = None) -> float:
+        """P(`side` scores the FIRST goal within the window). A race of the two
+        teams' goal rates over that window: P(any goal) * share of the rate.
+        Distinct from 'team scores in window' (which ignores who's first)."""
+        lam_h, lam_a = self.expected_goals(home, away, ctx)
+        s = self._share("GOALS", window)
+        lam_h, lam_a = lam_h * s, lam_a * s
+        tot = lam_h + lam_a
+        if tot <= 0:
+            return 0.0
+        p_any = 1.0 - float(np.exp(-tot))
+        lam_side = lam_h if side == "HOME" else lam_a
+        return p_any * lam_side / tot
 
     # ----- knockout: extra time & penalties (PRD §4.7, fixes B8) -----
 

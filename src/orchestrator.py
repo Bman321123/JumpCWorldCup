@@ -153,6 +153,20 @@ class Orchestrator:
                 logger.info("Market data from %s", type(source).__name__)
                 break
 
+        # anchor goal-derived markets to the sharp line's team strengths
+        if market and market.get("h2h"):
+            from .market_lambdas import market_implied_lambdas
+            totals = market.get("totals") or {}
+            line = 2.5 if 2.5 in totals else (next(iter(totals), None))
+            p_over = totals.get(line) if line is not None else None
+            implied = market_implied_lambdas(
+                market["h2h"]["home"], market["h2h"]["away"],
+                line, p_over, self.engine.p.rho)
+            if implied:
+                ctx.lambda_home_override, ctx.lambda_away_override = implied
+                logger.info("Market-implied lambdas %s=%.2f %s=%.2f",
+                            home, implied[0], away, implied[1])
+
         parsed_list: List[ParsedQuestion] = []
         predictions: List[Prediction] = []
         for i, text in enumerate(questions):
@@ -228,6 +242,10 @@ class Orchestrator:
                 _, s1, s2, w2 = q.metric.split("|")
                 return self.engine.first_goal_combo(
                     q.home_team, q.away_team, s1, s2, TemporalWindow(w2), ctx)
+            if q.metric.startswith("FIRST_IN_HALF|"):
+                _, side, w = q.metric.split("|")
+                return self.engine.first_in_window(
+                    q.home_team, q.away_team, side, TemporalWindow(w), ctx)
             return self.engine.goal_market(q.home_team, q.away_team, q.metric,
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)

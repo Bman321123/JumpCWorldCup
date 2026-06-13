@@ -82,6 +82,10 @@ class MatchContext:
     away_state: MotivationState = MotivationState.NORMAL
     home_absence_mult: float = 1.0      # player layer, applied to attack lambda
     away_absence_mult: float = 1.0
+    # market-implied expected goals (set when a sharp 1X2 line exists) — used in
+    # place of the compressed structural lambdas for goal-derived markets
+    lambda_home_override: Optional[float] = None
+    lambda_away_override: Optional[float] = None
     notes: str = ""
 
 
