@@ -5,7 +5,7 @@ import pytest
 from src.scrapers.aggregator import aggregate
 from src.scrapers.common import BookOdds, american_to_decimal, teams_match
 from src.scrapers.draftkings import parse_draftkings
-from src.scrapers.fanduel import parse_fanduel_event
+from src.scrapers.fanduel import parse_fanduel_markets
 from src.scrapers.pinnacle import parse_pinnacle
 
 
@@ -110,33 +110,34 @@ def test_parse_draftkings():
     assert g.btts is not None
 
 
-FD_PAYLOAD = {"attachments": {"markets": {
-    "m1": {"marketType": "MATCH_RESULT", "runners": [
-        {"runnerName": "Mexico",
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": -150}}},
-        {"runnerName": "Draw",
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": 280}}},
-        {"runnerName": "South Africa",
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": 440}}}]},
-    "m2": {"marketType": "TOTAL_GOALS_(OVER/UNDER)", "runners": [
-        {"runnerName": "Over 2.5 Goals", "handicap": 2.5,
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": -108}}},
-        {"runnerName": "Under 2.5 Goals", "handicap": 2.5,
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": -112}}}]},
+def _dec(d):
+    return {"winRunnerOdds": {"trueOdds": {"decimalOdds": {"decimalOdds": d}}}}
+
+
+# merged {marketId: market} dict, as FanDuel's event-page tabs return
+FD_MARKETS = {
+    "m1": {"marketType": "WIN-DRAW-WIN", "runners": [
+        {"runnerName": "Mexico", **_dec(1.7)},
+        {"runnerName": "Draw", **_dec(3.8)},
+        {"runnerName": "South Africa", **_dec(5.4)}]},
+    "m2": {"marketType": "OVER_UNDER_25", "runners": [
+        {"runnerName": "Over 2.5 Goals", "handicap": 0, **_dec(1.92)},
+        {"runnerName": "Under 2.5 Goals", "handicap": 0, **_dec(1.92)}]},
     "m3": {"marketType": "BOTH_TEAMS_TO_SCORE", "runners": [
-        {"runnerName": "Yes",
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": 118}}},
-        {"runnerName": "No",
-         "winRunnerOdds": {"americanDisplayOdds": {"americanOdds": -142}}}]},
-}}}
+        {"runnerName": "Yes", **_dec(2.18)},
+        {"runnerName": "No", **_dec(1.67)}]},
+    "m4": {"marketType": "PLAYER_TO_HAVE_1_OR_MORE_SHOTS", "runners": [
+        {"runnerName": "Hirving Lozano", **_dec(1.3)}]},
+}
 
 
-def test_parse_fanduel():
-    g = parse_fanduel_event(FD_PAYLOAD, "Mexico", "South Africa")
+def test_parse_fanduel_markets():
+    g = parse_fanduel_markets(FD_MARKETS, "Mexico", "South Africa")
     assert g is not None
     assert g.h2h and {"home", "draw", "away"} <= set(g.h2h)
     assert 2.5 in g.totals
     assert g.btts is not None
+    assert "Hirving Lozano" in g.player_shots          # player markets captured
 
 
 def test_aggregate_pinnacle_is_sharp_anchor():
@@ -155,7 +156,7 @@ def test_aggregate_pinnacle_is_sharp_anchor():
 
 def test_aggregate_median_without_pinnacle():
     dk = parse_draftkings(DK_PAYLOAD)[0]
-    fd = parse_fanduel_event(FD_PAYLOAD, "Mexico", "South Africa")
+    fd = parse_fanduel_markets(FD_MARKETS, "Mexico", "South Africa")
     out = aggregate([dk, fd], "Mexico", "South Africa")
     assert out is not None
     assert 0.30 < out["h2h"]["draw"] + out["h2h"]["away"] < 0.50

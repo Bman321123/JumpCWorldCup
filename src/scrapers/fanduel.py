@@ -1,10 +1,13 @@
-"""FanDuel scraper — soccer match markets via the two-step sbapi flow.
+"""FanDuel scraper — WC soccer match markets via the two-step sbapi flow.
 
-Refactored from CoreProp/scrapers/fanduel.py: identical strategy (Phase 1
-content-managed-page discovery with the public _ak token, Phase 2 event-page
-JSON per event, httpx transport — bypasses PerimeterX entirely). CoreProp
-skipped MATCH_RESULT / BOTH_TEAMS_TO_SCORE / totals as "game-level noise";
-here they are the whole point.
+Confirmed live (2026-06-13): customPageId='fifa-world-cup' lists ~70 events;
+per-event markets are paginated across tabs (popular/goals/corners/shots). FD
+carries 1X2, full + first-half totals, BTTS, team totals, corners, AND
+per-player shot markets — a deep second book for the line-comparison layer and
+a market anchor for player props.
+
+Strategy from CoreProp/scrapers/fanduel.py (httpx, public _ak token, two-step
+discovery -> event-page JSON) retargeted to soccer game + player markets.
 """
 from __future__ import annotations
 
@@ -12,125 +15,135 @@ import logging
 import re
 from typing import Dict, List, Optional
 
-from .common import BookOdds, american_to_decimal
+from .common import BookOdds, alias_hit, american_to_decimal
 
 logger = logging.getLogger(__name__)
 
-FD_AK_TOKEN = "FhMFpcPWXMeyZxOx"                # public web token (from CoreProp)
+FD_AK_TOKEN = "FhMFpcPWXMeyZxOx"
 SBAPI = "https://sbapi.nj.sportsbook.fanduel.com/api"
+PAGE_ID = "fifa-world-cup"
+TABS = ["popular", "goals", "corners", "shots"]
 FD_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                   "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "application/json",
 }
-PAGE_IDS = ("world-cup", "soccer")              # tried in order for discovery
-
 _TOTAL_RE = re.compile(r"(over|under)\s+(\d+(?:\.\d+)?)", re.IGNORECASE)
+_PLAYER_SHOTS_RE = re.compile(r"PLAYER_TO_HAVE_(\d+)_OR_MORE_SHOTS(_IN_1ST_HALF)?")
 
 
-def scrape_fanduel_soccer(home_name: str, away_name: str) -> List[BookOdds]:
-    """Discover the event for one fixture and pull its match markets."""
+def scrape_fanduel_soccer(home_aliases, away_aliases) -> List[BookOdds]:
+    """home_aliases/away_aliases: name or list of aliases for matching."""
     try:
         import httpx
         with httpx.Client(timeout=15) as client:
-            eid, ev_home, ev_away, kickoff = _find_event(client, home_name, away_name)
+            nav = client.get(f"{SBAPI}/content-managed-page",
+                             params={"page": "CUSTOM", "customPageId": PAGE_ID,
+                                     "_ak": FD_AK_TOKEN}, headers=FD_HEADERS)
+            if nav.status_code != 200:
+                logger.warning("FanDuel nav HTTP %d", nav.status_code)
+                return []
+            events = nav.json().get("attachments", {}).get("events", {})
+            eid = ev_home = ev_away = None
+            for k, ev in events.items():
+                name = ev.get("name", "")
+                for sep in (" v ", " vs ", " @ "):
+                    if sep in name:
+                        eh, ea = name.split(sep, 1)
+                        if alias_hit(eh, home_aliases) and alias_hit(ea, away_aliases):
+                            eid, ev_home, ev_away = k, eh.strip(), ea.strip()
+                        elif alias_hit(eh, away_aliases) and alias_hit(ea, home_aliases):
+                            eid, ev_home, ev_away = k, eh.strip(), ea.strip()
             if eid is None:
-                logger.info("FanDuel: no event found for %s vs %s", home_name, away_name)
+                logger.info("FanDuel: no event for given fixture")
                 return []
-            r = client.get(f"{SBAPI}/event-page",
-                           params={"_ak": FD_AK_TOKEN, "eventId": eid},
-                           headers=FD_HEADERS)
-            if r.status_code != 200:
-                logger.warning("FanDuel event-page HTTP %d", r.status_code)
-                return []
-            game = parse_fanduel_event(r.json(), ev_home, ev_away, kickoff)
+            markets: Dict[str, dict] = {}
+            for tab in TABS:
+                r = client.get(f"{SBAPI}/event-page",
+                               params={"_ak": FD_AK_TOKEN, "eventId": eid, "tab": tab},
+                               headers=FD_HEADERS)
+                if r.status_code == 200:
+                    markets.update(r.json().get("attachments", {}).get("markets", {}))
+            game = parse_fanduel_markets(markets, ev_home, ev_away)
             return [game] if game else []
     except Exception as e:                       # noqa: BLE001
         logger.warning("FanDuel scrape failed: %s", e)
         return []
 
 
-def _find_event(client, home_name: str, away_name: str):
-    from .common import teams_match
-    for page_id in PAGE_IDS:
-        try:
-            r = client.get(f"{SBAPI}/content-managed-page",
-                           params={"page": "CUSTOM", "customPageId": page_id,
-                                   "_ak": FD_AK_TOKEN},
-                           headers=FD_HEADERS)
-            if r.status_code != 200:
-                continue
-            events = r.json().get("attachments", {}).get("events", {})
-            for eid, ev in events.items():
-                name = ev.get("name", "")
-                for sep in (" v ", " vs ", " @ "):
-                    if sep in name:
-                        eh, ea = name.split(sep, 1)
-                        if teams_match(eh, ea, home_name, away_name):
-                            return eid, eh.strip(), ea.strip(), ev.get("openDate", "")
-        except Exception as e:                   # noqa: BLE001
-            logger.debug("FanDuel discovery %s: %s", page_id, e)
-    return None, None, None, None
+def _runner_decimal(runner: dict) -> Optional[float]:
+    o = runner.get("winRunnerOdds", {})
+    dec = o.get("trueOdds", {}).get("decimalOdds", {}).get("decimalOdds")
+    if dec:
+        return float(dec)
+    return american_to_decimal(o.get("americanDisplayOdds", {}).get("americanOdds"))
 
 
-def parse_fanduel_event(payload: dict, home_name: str, away_name: str,
-                        kickoff: str = "") -> Optional[BookOdds]:
-    """Pure parser for an event-page payload — unit-testable offline."""
-    markets = payload.get("attachments", {}).get("markets", {})
-    game = BookOdds(book="fanduel", home_name=home_name, away_name=away_name,
-                    kickoff=kickoff)
-    for mkt in markets.values():
-        mtype = str(mkt.get("marketType", "")).upper()
-        runners = mkt.get("runners", [])
-        if mtype == "MATCH_RESULT" or mtype == "MONEY_LINE_3_WAY":
-            h2h: Dict[str, float] = {}
-            for run in runners:
-                dec = _runner_decimal(run)
-                name = str(run.get("runnerName", "")).lower()
+def parse_fanduel_markets(markets: dict, home_name: str, away_name: str
+                          ) -> Optional[BookOdds]:
+    """Pure parser over a merged {marketId: market} dict — unit-testable."""
+    g = BookOdds(book="fanduel", home_name=home_name, away_name=away_name)
+    for m in markets.values():
+        mt = str(m.get("marketType", "")).upper()
+        runners = m.get("runners", [])
+
+        if mt == "WIN-DRAW-WIN":
+            h2h = {}
+            for ru in runners:
+                dec = _runner_decimal(ru)
+                nm = str(ru.get("runnerName", "")).strip().lower()
                 if dec is None:
                     continue
-                if name == "draw":
+                if nm == "draw" or nm == "tie":
                     h2h["draw"] = dec
-                elif name in home_name.lower() or home_name.lower() in name:
+                elif alias_hit(nm, home_name):
                     h2h["home"] = dec
-                elif name in away_name.lower() or away_name.lower() in name:
+                elif alias_hit(nm, away_name):
                     h2h["away"] = dec
             if {"home", "draw", "away"} <= set(h2h):
-                game.h2h = h2h
-        elif mtype == "BOTH_TEAMS_TO_SCORE":
-            yes = no = None
-            for run in runners:
-                dec = _runner_decimal(run)
-                name = str(run.get("runnerName", "")).lower()
-                if name == "yes":
-                    yes = dec
-                elif name == "no":
-                    no = dec
+                g.h2h = h2h
+
+        elif mt == "BOTH_TEAMS_TO_SCORE":
+            yes = next((_runner_decimal(r) for r in runners
+                        if str(r.get("runnerName", "")).lower() == "yes"), None)
+            no = next((_runner_decimal(r) for r in runners
+                       if str(r.get("runnerName", "")).lower() == "no"), None)
             if yes and no:
-                game.btts = (yes, no)
-        elif "TOTAL" in mtype and "TEAM" not in mtype and "1ST" not in mtype \
-                and "FIRST" not in mtype:
-            by_line: Dict[float, dict] = {}
-            for run in runners:
-                m = _TOTAL_RE.search(str(run.get("runnerName", "")))
-                dec = _runner_decimal(run)
-                line = run.get("handicap")
-                if m and dec is not None:
-                    side = m.group(1).lower()
-                    line = float(line) if line is not None else float(m.group(2))
-                    by_line.setdefault(line, {})[side] = dec
-            for line, sides in by_line.items():
-                if {"over", "under"} <= set(sides):
-                    game.totals[line] = (sides["over"], sides["under"])
-    if game.h2h or game.totals or game.btts:
-        return game
+                g.btts = (yes, no)
+
+        elif re.fullmatch(r"OVER_UNDER_\d+", mt):
+            _collect_total(g.totals, runners)
+        elif mt.startswith("1ST_HALF_OVER/UNDER") and "GOAL" in mt:
+            _collect_total(g.h1_totals, runners)
+        elif "CORNER" in mt and ("OVER" in mt or "TOTAL" in mt):
+            _collect_total(g.corner_totals, runners)
+
+        else:
+            sm = _PLAYER_SHOTS_RE.search(mt)
+            if sm:
+                thr = float(sm.group(1))
+                half = "H1" if sm.group(2) else "FULL"
+                for ru in runners:
+                    dec = _runner_decimal(ru)
+                    nm = ru.get("runnerName")
+                    if dec and nm:
+                        # one-sided yes price; shade ~5% overround off implied
+                        p = min((1.0 / dec) / 1.05, 0.97)
+                        g.player_shots.setdefault(nm, {})[f"{int(thr)}+_{half}"] = p
+    if g.h2h or g.totals or g.btts or g.corner_totals or g.player_shots:
+        return g
     return None
 
 
-def _runner_decimal(runner: dict) -> Optional[float]:
-    odds = runner.get("winRunnerOdds", {})
-    dec = odds.get("trueOdds", {}).get("decimalOdds", {}).get("decimalOdds")
-    if dec:
-        return float(dec)
-    american = odds.get("americanDisplayOdds", {}).get("americanOdds")
-    return american_to_decimal(american)
+def _collect_total(target: dict, runners: list) -> None:
+    by_line: Dict[float, dict] = {}
+    for ru in runners:
+        m = _TOTAL_RE.search(str(ru.get("runnerName", "")))
+        dec = _runner_decimal(ru)
+        if not m or dec is None:
+            continue
+        line = float(ru.get("handicap") or 0) or float(m.group(2))
+        by_line.setdefault(line, {})[m.group(1).lower()] = dec
+    for line, sides in by_line.items():
+        if {"over", "under"} <= set(sides):
+            target[line] = (sides["over"], sides["under"])

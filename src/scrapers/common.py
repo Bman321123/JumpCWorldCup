@@ -32,6 +32,8 @@ class BookOdds:
     h1_corner_totals: Dict[float, Tuple[float, float]] = field(default_factory=dict)
     booking_totals: Dict[float, Tuple[float, float]] = field(default_factory=dict)
     h1_booking_totals: Dict[float, Tuple[float, float]] = field(default_factory=dict)
+    # player_shots[player]["1+_FULL"] = implied P(>=1 shot) (FanDuel, one-sided)
+    player_shots: Dict[str, Dict[str, float]] = field(default_factory=dict)
 
 
 def american_to_decimal(american) -> Optional[float]:

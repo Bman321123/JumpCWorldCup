@@ -80,7 +80,7 @@ class ScrapedOddsClient:
                 (lambda: scrape_pinnacle_soccer(pin_ids), "pinnacle"),
                 (lambda: scrape_draftkings_soccer(
                     self.config.get("dk_event_group_id")), "draftkings"),
-                (lambda: scrape_fanduel_soccer(home_name, away_name), "fanduel")):
+                (lambda: scrape_fanduel_soccer(home_al, away_al), "fanduel")):
             try:
                 books.extend(fetch())
             except Exception as e:               # noqa: BLE001
@@ -159,8 +159,14 @@ def aggregate(books: List[BookOdds], home, away) -> Optional[dict]:
     out: dict = {"h2h": None, "totals": {}, "h1_totals": {}, "btts": None,
                  "corner_totals": {}, "h1_corner_totals": {},
                  "booking_totals": {}, "h1_booking_totals": {},
+                 "player_shots": {},
                  "books": [b.book for b in ordered],
                  "kickoff": next((b.kickoff for b in ordered if b.kickoff), None)}
+
+    # player shot markets (FanDuel) — keyed by player name -> {"1+_FULL": prob}
+    for b in ordered:
+        for player, props in b.player_shots.items():
+            out["player_shots"].setdefault(player, {}).update(props)
 
     if h2h_probs:
         if h2h_probs[0][0] == "pinnacle":
