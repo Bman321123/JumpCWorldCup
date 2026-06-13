@@ -57,6 +57,22 @@ def test_anytime_scorer_sane():
     assert 0.35 < p < 0.50
 
 
+def test_sparse_player_sot_shrinks_off_the_floor(tmp_path):
+    """A star with few logged matches and 0 SOT must NOT collapse to the 3%
+    floor — sparse rates shrink toward the position prior (the Schick lesson)."""
+    import json
+    from src.player_layer import PlayerShares, player_prop_prob
+    path = tmp_path / "shares.json"
+    path.write_text(json.dumps({"players": {
+        "Sparse Star": {"team": "QAT", "position": "FW", "share": 0.0,
+                        "sot90": 0.0, "apps": 3, "expected_minutes": 90}}}))
+    ps = PlayerShares(str(path))
+    p, note = player_prop_prob("Sparse Star", "PLAYER_SOT", 1.0,
+                               1.4, 1.2, "QAT", "SUI", ps)
+    assert p > 0.30          # shrunk toward FW prior, not stuck at 0.03
+    assert p <= 0.85         # cap still holds
+
+
 def test_availability_multiplier_floor(tmp_path):
     import json
     path = tmp_path / "shares.json"

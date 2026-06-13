@@ -6,11 +6,16 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .types import MatchContext, MotivationState
 
 logger = logging.getLogger(__name__)
+
+
+def _norm_ref(name: str) -> str:
+    return re.sub(r"[^a-z ]", "", name.lower()).strip()
 
 HOSTS = {"MEX", "CAN", "USA"}
 ALTITUDE_GOAL_MULT = 0.92       # >= 1500m (Azteca 2240m, Akron 1560m)
@@ -42,15 +47,20 @@ class RefereeTable:
                 logger.warning("No referee table at %s; multipliers default to 1.0", path)
 
     def multiplier(self, referee_id: Optional[str], card_type: str = "YELLOWS",
-                   global_avg: float = 3.6) -> float:
-        if not referee_id or referee_id not in self.table:
+                   global_avg: float = 3.7) -> float:
+        """referee_id may be a referee NAME (ESPN officials) or a table key;
+        both resolve via name normalization. Multiplier is shrunk toward 1.0
+        below ~10 logged matches so sparse referees can't swing the model."""
+        if not referee_id:
             return 1.0
-        ref = self.table[referee_id]
+        ref = self.table.get(referee_id) or self.table.get(_norm_ref(referee_id))
+        if not ref:
+            return 1.0
         rate = ref.get("yellow_per_match" if card_type == "YELLOWS" else "red_per_match")
         n = float(ref.get("total_matches", 0))
         if rate is None or n <= 0:
             return 1.0
-        raw = rate / (global_avg if card_type == "YELLOWS" else 0.18)
+        raw = rate / (global_avg if card_type == "YELLOWS" else 0.28)
         return float((n * raw + REF_SHRINK_N * 1.0) / (n + REF_SHRINK_N))
 
 

@@ -49,12 +49,21 @@ def player_prop_prob(name: str, metric: str, threshold: float,
     info = shares.players.get(name)
     if info and info.get("team") in (home, away):
         lam_team = lam_home if info["team"] == home else lam_away
-        share = float(info.get("share",
-                               DEFAULT_SHARE_BY_POS.get(info.get("position", "MF"), 0.12)))
-        sot90 = float(info.get("sot90",
-                               DEFAULT_SOT90_BY_POS.get(info.get("position", "MF"), 0.7)))
+        pos = info.get("position", "MF")
+        apps = float(info.get("apps", 0))
+        # shrink BOTH involvement and SOT toward position priors by sample size:
+        # a star with 2 logged matches and 0 SOT is not a 3%-to-get-a-shot bet
+        # (the Schick lesson). K pseudo-matches of prior pull sparse rates in.
+        K = 5.0
+        prior_share = DEFAULT_SHARE_BY_POS.get(pos, 0.12)
+        prior_sot90 = DEFAULT_SOT90_BY_POS.get(pos, 0.7)
+        raw_share = float(info.get("share", prior_share))
+        raw_sot90 = float(info.get("sot90", prior_sot90))
+        share = (raw_share * apps + prior_share * K) / (apps + K)
+        sot90 = (raw_sot90 * apps + prior_sot90 * K) / (apps + K)
         minutes = float(info.get("expected_minutes", 90.0))
-        note = f"shares[{name}] team={info['team']} share={share:.2f}"
+        note = (f"shares[{name}] team={info['team']} share={share:.2f} "
+                f"sot90={sot90:.2f} apps={int(apps)}")
     else:
         lam_team = max(lam_home, lam_away)   # conservative: assume the stronger side
         share, sot90, minutes = UNKNOWN_PLAYER_SHARE, UNKNOWN_PLAYER_SOT90, 90.0

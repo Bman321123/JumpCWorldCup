@@ -36,6 +36,8 @@ COMPS = {
 STAT_MAP = {"wonCorners": "corners", "yellowCards": "yellows",
             "redCards": "reds", "offsides": "offsides",
             "shotsOnTarget": "sot", "foulsCommitted": "fouls"}
+PLAYER_STATS = ("totalShots", "shotsOnTarget", "totalGoals", "goalAssists",
+                "foulsCommitted", "offsides", "yellowCards", "redCards")
 
 
 def _get(url: str, params: dict | None = None) -> dict:
@@ -54,9 +56,14 @@ def ingest(comp: str, league: str, dates: str) -> int:
     saved = 0
     for ev in events:
         out_path = PARSED_DIR / f"espn_{comp}_{ev['id']}.json"
+        # re-fetch if an old file lacks the richer player/referee data
         if out_path.exists():
-            saved += 1
-            continue
+            try:
+                if "players" in json.loads(out_path.read_text()):
+                    saved += 1
+                    continue
+            except (ValueError, OSError):
+                pass
         status = ev.get("status", {}).get("type", {}).get("state")
         if status != "post":                    # only completed matches
             continue
@@ -65,6 +72,7 @@ def ingest(comp: str, league: str, dates: str) -> int:
         except requests.RequestException as e:
             print(f"  {ev['id']}: {e}")
             continue
+
         teams = {}
         for t in summary.get("boxscore", {}).get("teams", []):
             name = t.get("team", {}).get("displayName")
@@ -78,13 +86,53 @@ def ingest(comp: str, league: str, dates: str) -> int:
                         pass
             if name and stats:
                 teams[name] = stats
+
+        players = _parse_players(summary)
+        referee = _parse_referee(summary)
         if len(teams) == 2:
             out_path.write_text(json.dumps(
                 {"source": "espn", "event": ev.get("name"),
-                 "date": ev.get("date"), "teams": teams}, indent=1))
+                 "date": ev.get("date"), "teams": teams,
+                 "players": players, "referee": referee}, indent=1))
             saved += 1
     print(f"{comp}: {saved} match stat files in {PARSED_DIR}")
     return saved
+
+
+def _parse_players(summary: dict) -> list:
+    """Per-player line: team, name, position, starter, minutes proxy, stats."""
+    out = []
+    for r in summary.get("rosters", []):
+        team = r.get("team", {}).get("displayName")
+        for p in r.get("roster", []):
+            ath = p.get("athlete", {}).get("displayName")
+            if not ath:
+                continue
+            stats = {s["name"]: s.get("value") for s in p.get("stats", [])}
+            if not stats:
+                continue
+            starter = bool(p.get("starter"))
+            subbed_out = p.get("subbedOut") not in (None, False)
+            subbed_in = p.get("subbedIn") not in (None, False)
+            if not (starter or subbed_in):
+                continue                          # unused bench player
+            minutes = 90 if starter and not subbed_out else 65 if starter else 25
+            row = {"team": team, "name": ath,
+                   "position": p.get("position", {}).get("abbreviation", "M"),
+                   "starter": starter, "minutes": minutes}
+            for k in PLAYER_STATS:
+                v = stats.get(k)
+                row[k] = int(v) if isinstance(v, (int, float)) else 0
+            out.append(row)
+    return out
+
+
+def _parse_referee(summary: dict) -> str | None:
+    officials = summary.get("gameInfo", {}).get("officials", [])
+    if not officials:
+        return None
+    main = min(officials, key=lambda o: o.get("order", 99))
+    return main.get("fullName") or main.get("displayName")
 
 
 if __name__ == "__main__":

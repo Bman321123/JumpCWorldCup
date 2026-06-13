@@ -88,7 +88,20 @@ class Orchestrator:
                       away_absences: Optional[List[str]] = None,
                       home_state: MotivationState = MotivationState.NORMAL,
                       away_state: MotivationState = MotivationState.NORMAL,
-                      output_dir: Optional[str] = None) -> dict:
+                      output_dir: Optional[str] = None,
+                      lookup_referee: bool = True) -> dict:
+        # attach the assigned referee (ESPN) when online and not supplied, so
+        # card markets use the real official instead of league-average
+        if referee_id is None and self.odds_sources and lookup_referee:
+            home_name = self.team_names.get(home, home)
+            away_name = self.team_names.get(away, away)
+            try:
+                from .espn_live import match_referee
+                referee_id = match_referee(home_name, away_name)
+                if referee_id:
+                    logger.info("Referee for %s v %s: %s", home, away, referee_id)
+            except Exception as e:               # noqa: BLE001
+                logger.warning("Referee lookup skipped: %s", e)
         ctx = self.resolver.resolve(home, away, match_date, tournament_round,
                                     stadium, referee_id, home_state, away_state)
         ctx.home_absence_mult = self.players.availability_multiplier(home, home_absences or [])
