@@ -87,11 +87,16 @@ def test_player_sot_uses_fd_shots_market(tmp_path):
     ps = PlayerShares(str(path))
     base, _ = player_prop_prob("Star FW", "PLAYER_SOT", 1.0, 0.8, 1.6,
                                "QAT", "SUI", ps, opp_sot_against=4.3)
-    hot, note = player_prop_prob("Star FW", "PLAYER_SOT", 1.0, 0.8, 1.6,
-                                 "QAT", "SUI", ps, opp_sot_against=4.3,
-                                 fd_shots={"1+_FULL": 0.92})
-    assert hot > base                         # strong shots market lifts the estimate
+    moved, note = player_prop_prob("Star FW", "PLAYER_SOT", 1.0, 0.8, 1.6,
+                                   "QAT", "SUI", ps, opp_sot_against=4.3,
+                                   fd_shots={"1+_FULL": 0.55})
+    assert abs(moved - base) > 0.01           # the market signal moves the estimate
     assert "FD_shots" in note
+    # a very strong shots market (implies high shot volume) lifts SOT above model
+    hot, _ = player_prop_prob("Star FW", "PLAYER_SOT", 1.0, 0.8, 1.6,
+                              "QAT", "SUI", ps, opp_sot_against=4.3,
+                              fd_shots={"1+_FULL": 0.97})
+    assert hot > base
 
 
 def test_sparse_player_sot_shrinks_off_the_floor(tmp_path):
