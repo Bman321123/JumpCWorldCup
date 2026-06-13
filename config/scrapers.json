@@ -1,5 +1,6 @@
 {
-  "_note": "Pin discovered ids here to skip discovery calls. pinnacle_league_ids: from src/scrapers/pinnacle.discover_league_ids; dk_event_group_id: from src/scrapers/draftkings.discover_event_group.",
+  "_note": "Pinnacle is the sharp anchor and auto-discovers WC leagues — no pinning needed. DraftKings/FanDuel are optional redundancy; their APIs are geo/bot-sensitive (DK returned 400 on probe). To enable: open the WC odds page on each site, copy the eventGroupId (DK) / customPageId (FD) from devtools Network tab, and paste below.",
   "pinnacle_league_ids": null,
-  "dk_event_group_id": null
+  "dk_event_group_id": null,
+  "fd_page_id": null
 }

@@ -94,7 +94,23 @@ class Orchestrator:
                       home_state: MotivationState = MotivationState.NORMAL,
                       away_state: MotivationState = MotivationState.NORMAL,
                       output_dir: Optional[str] = None,
-                      lookup_referee: bool = True) -> dict:
+                      lookup_referee: bool = True,
+                      compute_motivation: bool = True) -> dict:
+        # group-stage motivation: from matchday 2 the standings decide who is
+        # must-win / safe / eliminated (affects card intensity). No-op on
+        # matchday 1 (everyone NORMAL) and gracefully skipped offline.
+        if (compute_motivation and tournament_round == "group" and self.odds_sources
+                and home_state == MotivationState.NORMAL
+                and away_state == MotivationState.NORMAL):
+            try:
+                from .standings import group_motivation
+                probs_fn = lambda h, a: tuple(self.engine.result_probs(h, a).values())
+                home_state, away_state = group_motivation(home, away, probs_fn)
+                if home_state != MotivationState.NORMAL or away_state != MotivationState.NORMAL:
+                    logger.info("Motivation %s=%s %s=%s", home, home_state.value,
+                                away, away_state.value)
+            except Exception as e:               # noqa: BLE001
+                logger.warning("Motivation skipped: %s", e)
         # attach the assigned referee (ESPN) when online and not supplied, so
         # card markets use the real official instead of league-average
         if referee_id is None and self.odds_sources and lookup_referee:
