@@ -32,7 +32,8 @@ COMPS = {
 }
 MATCH_HREF = re.compile(r"/en/matches/[0-9a-f]{8}/[A-Za-z0-9\-]+")
 SHRINK_N = 8.0      # pseudo-matches toward the global mean
-GLOBAL = {"corners": 4.9, "yellows": 1.7, "reds": 0.09, "offsides": 2.0, "sot": 4.3}
+GLOBAL = {"corners": 4.9, "yellows": 1.7, "reds": 0.09, "offsides": 2.0,
+          "sot": 4.3, "fouls": 12.0}
 
 
 def collect_urls(schedule_url: str) -> list:
@@ -108,7 +109,7 @@ def aggregate() -> None:
             keys.append(code)
         for k, table_name in (("corners", "corner_for"), ("yellows", "yellow_rates"),
                               ("reds", "red_rates"), ("offsides", "offside_rates"),
-                              ("sot", "sot_rates")):
+                              ("sot", "sot_rates"), ("fouls", "fouls_rates")):
             rate = (sums[name][k] + GLOBAL[k] * SHRINK_N) / (n + SHRINK_N)
             for key in keys:
                 getattr(params, table_name)[key] = round(rate, 3)

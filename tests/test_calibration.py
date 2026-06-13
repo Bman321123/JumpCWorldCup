@@ -24,8 +24,9 @@ def test_isotonic_improves_brier():
 def test_platt_used_below_min_n():
     raw, outcomes = _overconfident_data(n=200)
     cal = CalibrationTrainer().train(raw, outcomes)
-    from src.calibration_layer import PlattCalibrator
-    assert isinstance(cal, PlattCalibrator)
+    from src.calibration_layer import PlattCalibrator, RangeGuardedCalibrator
+    assert isinstance(cal, RangeGuardedCalibrator)
+    assert isinstance(cal.inner, PlattCalibrator)
 
 
 def test_layer_identity_fallback():
@@ -39,6 +40,23 @@ def test_layer_one_dimensional_input():              # B10 — sklearn shape bug
     layer = CalibrationLayer({"GOAL_MARKET": cal})
     out = layer.calibrate(0.9, "GOAL_MARKET")
     assert 0.0 < out < 1.0 and out < 0.9             # overconfidence pulled in
+
+
+def test_range_guard_identity_outside_training_support():
+    """Live bug 2026-06-13: a Platt calibrator trained on probs in ~[0.35,0.65]
+    mapped a sane 0.23 compound estimate to 0.42. Outside its training range a
+    calibrator must be identity."""
+    rng = np.random.default_rng(5)
+    raw = rng.uniform(0.35, 0.65, 400)            # narrow training band
+    outcomes = (rng.random(400) < raw).astype(float)
+    cal = CalibrationTrainer().train(raw, outcomes)
+    layer = CalibrationLayer({"GOAL_MARKET": cal})
+    assert layer.calibrate(0.10, "GOAL_MARKET") == pytest.approx(0.10)
+    assert layer.calibrate(0.23, "GOAL_MARKET") == pytest.approx(0.23)
+    assert layer.calibrate(0.92, "GOAL_MARKET") == pytest.approx(0.92)
+    # inside the band it still calibrates (output may differ from input)
+    inside = layer.calibrate(0.50, "GOAL_MARKET")
+    assert 0.3 < inside < 0.7
 
 
 def test_ece_zero_for_perfect():

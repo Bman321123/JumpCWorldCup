@@ -27,11 +27,11 @@ The ML model is only as good as what it eats. Everything below is public and fre
 
 | # | Task | Source | Status |
 |---|------|--------|--------|
-| 1.1 | Per-team micro rates: corners for/against, cards, fouls, offsides, SOT — last 4 years, all 48 teams + historical label corpus (WC 2014/18/22, Euro, Copa, qualifiers) | FBref match reports (polite overnight scrape; scaffold exists in `ingestion/ingest_fbref.py`) | ☐ |
+| 1.1 | Per-team micro rates: corners for/against, cards, fouls, offsides, SOT | **DONE via ESPN API** (FBref is Cloudflare-blocked): `ingestion/ingest_espn.py`, 213 matches (WC18/22, EURO24, COPA24, live WC26), 35/48 WC teams covered, shrunk rates in params. Nightly: `--comps WC2026` | ☑ |
 | 1.2 | Club-football training corpus: ~40k matches with corners, cards, AND closing odds (market features + labels at volume) | football-data.co.uk CSVs (instant download) | ☐ |
 | 1.3 | Referee card table: 2026 referee list × career rates | FIFA.com + worldfootball.net | ☐ |
 | 1.4 | Player shares for ~200 likely prop subjects: xG+xA involvement, SOT/90, expected minutes | FIFA squad lists + FBref player pages | ☐ |
-| 1.5 | **Crowd capture**: log question text, crowd %, our submission, outcome for every match — the contest's own 1,040 questions are the most relevant training data that exists, and nobody else is logging it | Manual paste after each match (CLI) or repurpose the CoreProp Chrome extension to read the platform page | ☐ |
+| 1.5 | **Crowd capture**: log question text, crowd %, our submission, outcome for every match | **SHIPPED**: `extension/` (load unpacked in Chrome) + `tools/crowd_server.py`. Questions + submissions + results now also flow via the official bot API (`tools/submit.py`, `tools/sync_results.py`); the extension's unique job is crowd %s, which the API hides | ☑ |
 | 1.6 | Pin DraftKings event-group id + FanDuel page id; verify both scrapers live (redundancy for Pinnacle) | Browser devtools, ~30 min | ☐ |
 
 ## Phase 2 — ML model v2 (June 16–22)

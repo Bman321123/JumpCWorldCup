@@ -146,6 +146,11 @@ class Orchestrator:
         if q.condition == Condition.MORE_THAN_OPP:
             return self.engine.comparative_prob(q.home_team, q.away_team, q.metric,
                                                 q.target, q.window, ctx)
+        if q.metric.startswith("BOTH|"):
+            ref_mult = self.resolver.referees.multiplier(ctx.referee_id, "YELLOWS")
+            return self.engine.both_teams_prob(q.home_team, q.away_team,
+                                               q.metric.split("|")[1], q.threshold,
+                                               q.window, ctx, ref_mult)
         if f == QuestionFamily.PENALTY_MARKET:
             return self.engine.penalty_prob(ctx)
         if f == QuestionFamily.SHOTS_MARKET:

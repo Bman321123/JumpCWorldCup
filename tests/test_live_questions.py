@@ -186,6 +186,38 @@ def test_first_goal_combo_parses_and_prices(clf, orch):
     assert p < leg1_cap
 
 
+# ---- formats observed live 2026-06-13 (QAT vs SUI set) ----
+
+def test_both_teams_sot_is_per_team_not_total(clf, orch):
+    """'Both teams 1+ SOT at halftime' means EACH team — v1 priced the total
+    (97% on a ~68% event, a Q10-class landmine)."""
+    q = clf.parse("At halftime, will both teams have at least 1 shot on target?",
+                  "QAT", "SUI", "group")
+    assert q.metric == "BOTH|SOT"
+    assert q.window == TemporalWindow.H1
+    p_both = orch.engine.both_teams_prob("CZE", "KOR", "SOT", 1.0,
+                                         TemporalWindow.H1)
+    p_total = orch.engine.shots_market("CZE", "KOR", "MATCH", 1.0,
+                                       Condition.GTE, TemporalWindow.H1)
+    assert p_both < p_total          # conjunction strictly below the total event
+    assert p_both < 0.90             # never the 97% disaster
+    assert 0.30 < p_both
+
+
+def test_fouls_comparative_and_totals(clf, orch):
+    q = clf.parse("Will Qatar commit more fouls than Switzerland?",
+                  "QAT", "SUI", "group")
+    assert q.condition == Condition.MORE_THAN_OPP
+    assert q.metric == "FOULS"
+    p = orch.engine.comparative_prob("CZE", "KOR", "FOULS", "HOME")
+    assert 0.2 < p < 0.8
+    q2 = clf.parse("Will Qatar commit 12 or more fouls?", "QAT", "SUI", "group")
+    assert q2.metric == "FOULS"
+    p2 = orch.engine.card_market("CZE", "KOR", "HOME", "FOULS", 12.0,
+                                 Condition.GTE)
+    assert 0.1 < p2 < 0.9
+
+
 def test_unsupported_compound_flags_not_silently_prices(orch):
     """Unmodeled conjunctions must hit the flagged fallback — pricing one leg
     as if it were the whole question is the silent failure mode."""

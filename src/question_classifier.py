@@ -75,8 +75,8 @@ class QuestionClassifier:
         threshold, condition = self._parse_threshold(text)
 
         # comparative: "will X have/finish with more <metric> than Y" (observed live)
-        comp = re.search(r"\bwill (.+?) (?:have|finish with|end with|record) more "
-                         r"([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
+        comp = re.search(r"\bwill (.+?) (?:have|finish with|end with|record|commit) "
+                         r"more ([a-z' \-]+?) than (.+?)(?:\?|$| in\b| at\b| during\b)",
                          text)
         if comp:
             # target must be the team in group(1), NOT whichever alias is longest
@@ -125,6 +125,18 @@ class QuestionClassifier:
                                   home_team, away_team, "MATCH", "PENALTY", 1.0,
                                   Condition.BINARY_YES, window, ResultScope.NONE,
                                   weight)
+
+        # "both teams >= k <metric>" (observed live 2026-06-13): each team must
+        # reach the threshold — NOT a total. v1 priced 'both teams 1+ SOT' as
+        # total SOT >= 1: 97% on a ~68% event.
+        if "both teams" in text and threshold is not None:
+            family, metric = self._family_metric(text)
+            if metric in ("SOT", "CORNERS", "CARDS", "YELLOWS", "REDS",
+                          "OFFSIDES", "FOULS"):
+                return ParsedQuestion(raw_text, qid, family, home_team, away_team,
+                                      "MATCH", f"BOTH|{metric}", threshold,
+                                      Condition.GTE, window, ResultScope.NONE,
+                                      weight)
 
         # player props (observed live): "will <name> score a goal" / "... shot(s) on target"
         if side is None and "both teams" not in text:
@@ -196,6 +208,8 @@ class QuestionClassifier:
             return QuestionFamily.CORNER_MARKET, "CORNERS"
         if re.search(r"shots? on target", text):
             return QuestionFamily.SHOTS_MARKET, "SOT"
+        if "foul" in text:
+            return QuestionFamily.CARD_MARKET, "FOULS"
         if "red card" in text:
             return QuestionFamily.CARD_MARKET, "REDS"
         if "yellow card" in text:

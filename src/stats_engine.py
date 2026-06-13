@@ -25,7 +25,7 @@ PENS_BASE = 0.50
 
 # H1 share of full-match counts; H2 = 1 - share (PRD §4.8, fixes B9 incl. cards)
 DEFAULT_HALF_SHARES = {"GOALS": 0.45, "CORNERS": 0.46, "CARDS": 0.33,
-                       "OFFSIDES": 0.48, "SHOTS": 0.46}
+                       "OFFSIDES": 0.48, "SHOTS": 0.46, "FOULS": 0.47}
 
 # Per-team per-match fallback rates when no fitted value exists
 DEFAULTS = {
@@ -33,6 +33,8 @@ DEFAULTS = {
     "yellow": 1.7, "red": 0.09, "offside": 2.0,
     "yellow_var_ratio": 1.5, "red_var_ratio": 1.55,
     "sot_for": 4.3,                  # shots on target per team per match
+    "fouls": 12.0,                   # fouls committed per team per match
+    "fouls_var_ratio": 1.3,
     "penalty_awarded": 0.29,         # P(any penalty kick awarded), VAR era
 }
 
@@ -50,6 +52,7 @@ class ModelParameters:
     red_rates: Dict[str, float] = field(default_factory=dict)
     offside_rates: Dict[str, float] = field(default_factory=dict)
     sot_rates: Dict[str, float] = field(default_factory=dict)
+    fouls_rates: Dict[str, float] = field(default_factory=dict)
     half_shares: Dict[str, float] = field(default_factory=lambda: dict(DEFAULT_HALF_SHARES))
     fitted_at: str = ""
     data_cutoff: str = ""
@@ -232,6 +235,9 @@ class StatsEngine:
         if card_type == "REDS":
             base, ratio = self.p.red_rates, DEFAULTS["red_var_ratio"]
             default = DEFAULTS["red"]
+        elif card_type == "FOULS":
+            base, ratio = self.p.fouls_rates, DEFAULTS["fouls_var_ratio"]
+            default = DEFAULTS["fouls"]
         else:
             base, ratio = self.p.yellow_rates, DEFAULTS["yellow_var_ratio"]
             default = DEFAULTS["yellow"]
@@ -242,7 +248,7 @@ class StatsEngine:
             mu_h += self.p.red_rates.get(home, DEFAULTS["red"]) * ref_mult * intensity
             mu_a += self.p.red_rates.get(away, DEFAULTS["red"]) * ref_mult * intensity
         mu = {"HOME": mu_h, "AWAY": mu_a}.get(target, mu_h + mu_a)
-        mu *= self._share("CARDS", window)
+        mu *= self._share("FOULS" if card_type == "FOULS" else "CARDS", window)
         dist = nbinom_from_mean(mu, ratio)
         return count_prob(lambda k: float(dist.cdf(k)), threshold, condition)
 
@@ -296,6 +302,10 @@ class StatsEngine:
             lam_h = self.p.yellow_rates.get(home, DEFAULTS["yellow"])
             lam_a = self.p.yellow_rates.get(away, DEFAULTS["yellow"])
             share = self._share("CARDS", window)
+        elif metric == "FOULS":
+            lam_h = self.p.fouls_rates.get(home, DEFAULTS["fouls"])
+            lam_a = self.p.fouls_rates.get(away, DEFAULTS["fouls"])
+            share = self._share("FOULS", window)
         elif metric == "OFFSIDES":
             lam_h = self.p.offside_rates.get(home, DEFAULTS["offside"])
             lam_a = self.p.offside_rates.get(away, DEFAULTS["offside"])
@@ -309,6 +319,45 @@ class StatsEngine:
         if target == "AWAY":
             lam_h, lam_a = lam_a, lam_h
         return _poisson_greater(lam_h, lam_a)
+
+    # ----- "both teams >= k <metric>" (observed live 2026-06-13) -----
+
+    def both_teams_prob(self, home: str, away: str, metric: str, threshold: float,
+                        window: TemporalWindow = TemporalWindow.FULL,
+                        ctx: Optional[MatchContext] = None,
+                        ref_mult: float = 1.0) -> float:
+        """P(home count >= k AND away count >= k). Independence approximation
+        per team. v1 of the parser priced 'both teams 1+ SOT at halftime' as
+        TOTAL SOT >= 1 (97% on a ~68% event) — this is the fix."""
+        from .count_math import count_prob
+        k = threshold
+        if metric in ("CARDS", "YELLOWS", "REDS"):
+            ps = []
+            for target in ("HOME", "AWAY"):
+                ps.append(self.card_market(home, away, target, metric, k,
+                                           Condition.GTE, window, ctx, ref_mult))
+            return ps[0] * ps[1]
+        if metric == "CORNERS":
+            lam_h, lam_a = self.corner_lambdas(home, away, ctx)
+            share = self._share("CORNERS", window)
+        elif metric == "SOT":
+            lam_h, lam_a = self._sot_lambdas(home, away, ctx)
+            share = self._share("SHOTS", window)
+        elif metric == "FOULS":
+            lam_h = self.p.fouls_rates.get(home, DEFAULTS["fouls"])
+            lam_a = self.p.fouls_rates.get(away, DEFAULTS["fouls"])
+            share = self._share("FOULS", window)
+        elif metric == "OFFSIDES":
+            lam_h = self.p.offside_rates.get(home, DEFAULTS["offside"])
+            lam_a = self.p.offside_rates.get(away, DEFAULTS["offside"])
+            share = self._share("OFFSIDES", window)
+        else:
+            raise ValueError(f"both_teams_prob: unsupported metric {metric}")
+        p_h = count_prob(lambda j: float(poisson.cdf(j, lam_h * share)), k,
+                         Condition.GTE)
+        p_a = count_prob(lambda j: float(poisson.cdf(j, lam_a * share)), k,
+                         Condition.GTE)
+        return p_h * p_a
 
     # ----- penalty awarded (observed question type) -----
 

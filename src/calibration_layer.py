@@ -39,17 +39,41 @@ def _logit(p: np.ndarray) -> np.ndarray:
     return np.log(p / (1.0 - p))
 
 
+class RangeGuardedCalibrator:
+    """Applies the wrapped calibrator only inside its training support
+    (5th-95th pct of training probabilities); identity elsewhere.
+
+    Why: a calibrator fitted on probabilities clustered in [0.35, 0.65] knows
+    nothing about inputs at 0.1 — extrapolating there mapped a sane 0.23
+    compound estimate to 0.42 in live testing. Outside the support, the raw
+    model number is strictly more trustworthy."""
+
+    def __init__(self, inner, lo: float, hi: float):
+        self.inner = inner
+        self.lo, self.hi = float(lo), float(hi)
+
+    def predict(self, probs):
+        p = np.asarray(probs, dtype=float)
+        out = p.copy()
+        mask = (p >= self.lo) & (p <= self.hi)
+        if mask.any():
+            out[mask] = self.inner.predict(p[mask])
+        return out
+
+
 class CalibrationTrainer:
     def train(self, probs: np.ndarray, outcomes: np.ndarray):
         probs = np.asarray(probs, dtype=float)
         outcomes = np.asarray(outcomes, dtype=float)
         if len(probs) >= ISOTONIC_MIN_N:
-            ir = IsotonicRegression(out_of_bounds="clip", increasing=True,
-                                    y_min=0.0, y_max=1.0)
-            ir.fit(probs, outcomes)
-            return ir
-        logger.info("n=%d < %d: using Platt scaling.", len(probs), ISOTONIC_MIN_N)
-        return PlattCalibrator().fit(probs, outcomes)
+            inner = IsotonicRegression(out_of_bounds="clip", increasing=True,
+                                       y_min=0.0, y_max=1.0)
+            inner.fit(probs, outcomes)
+        else:
+            logger.info("n=%d < %d: using Platt scaling.", len(probs), ISOTONIC_MIN_N)
+            inner = PlattCalibrator().fit(probs, outcomes)
+        lo, hi = np.percentile(probs, [5, 95])
+        return RangeGuardedCalibrator(inner, lo, hi)
 
     @staticmethod
     def ece(probs: np.ndarray, outcomes: np.ndarray, n_bins: int = 10) -> float:

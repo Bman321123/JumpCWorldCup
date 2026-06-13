@@ -6,6 +6,9 @@ __pycache__/
 data/raw/
 data/*.db
 data/*.csv
+data/match_stats/
+data/crowd_raw/
+data/platform_results/
 output/predictions/
 *.joblib
 .DS_Store
