@@ -1,11 +1,16 @@
-"""Barebones localhost dashboard for the optimal odds (ROADMAP 3.1).
+"""Localhost control panel for the Probability Cup (ROADMAP 3.1 + submission).
 
-  python tools/dashboard.py        # http://127.0.0.1:8770
+  python tools/dashboard.py          # http://127.0.0.1:8770
 
-Lists tonight's matches from the platform, and on demand prices one match
-through the full pipeline (model + scraped sharp odds + crowd + policy),
-showing model / market / crowd / SUBMIT / confidence side by side. Pure stdlib
-HTTP server; results cached in-process for 5 minutes per match.
+Shows optimal odds per match (model / market / crowd / SUBMIT / edge /
+confidence), and lets you act:
+  - "Submit all" / "Submit auto-eligible": YOU click, it posts to the platform
+    via the bot API (manual submission you drive).
+  - Autopilot arm toggle: flips config/auto_trade.json. When armed, the
+    autopilot button submits auto-eligible questions across matches.
+
+Safety: every submission is an explicit button click here. Claude does not
+arm autopilot or click submit — those are your actions.
 """
 from __future__ import annotations
 
@@ -13,7 +18,6 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -29,74 +33,105 @@ from src.submission_policy import submission                      # noqa: E402
 
 LOBBY_ID = "8df8038c-fd2c-4a5f-be4e-0e11d5966c05"
 DB = str(ROOT / "data" / "wc_forecasting.db")
-CACHE_TTL = 300
+AUTO_CFG = ROOT / "config" / "auto_trade.json"
 _cache: dict = {}
 
-PAGE = """<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Probability Cup — Optimal Odds</title>
+PAGE = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Probability Cup — Control Panel</title>
 <style>
  body{font-family:system-ui,sans-serif;background:#0b1220;color:#e2e8f0;margin:0;padding:24px}
  h1{font-size:18px;color:#4f8cff;margin:0 0 4px}
- .sub{color:#64748b;font-size:12px;margin-bottom:18px}
- .matches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
- .m{background:#111c33;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;
-    cursor:pointer;font-size:13px}
- .m:hover{border-color:#4f8cff}
- .m .t{color:#94a3b8;font-size:11px}
+ .sub{color:#64748b;font-size:12px;margin-bottom:14px}
+ .bar{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+ .pill{background:#111c33;border:1px solid #1e3a5f;border-radius:20px;padding:5px 12px;font-size:12px}
+ .armed{border-color:#7f1d1d;color:#fca5a5} .disarmed{border-color:#14532d;color:#86efac}
+ .matches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+ .m{background:#111c33;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px}
+ .m:hover{border-color:#4f8cff}.m .t{color:#94a3b8;font-size:11px}
  table{width:100%;border-collapse:collapse;font-size:13px}
  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #1a2942}
  th{color:#64748b;font-weight:600;font-size:11px;text-transform:uppercase}
  td.n{text-align:right;font-variant-numeric:tabular-nums}
- .submit{font-weight:700;color:#7dd3fc}
- .edge-hi{color:#4ade80;font-weight:700}
- .auto{color:#4ade80} .hand{color:#fbbf24}
- .flag{color:#f87171;font-size:11px}
- .bar{display:inline-block;height:8px;border-radius:2px;background:#334155;vertical-align:middle}
+ .submit{font-weight:700;color:#7dd3fc}.edge-hi{color:#4ade80;font-weight:700}
+ .auto{color:#4ade80}.hand{color:#fbbf24}.flag{color:#f87171;font-size:11px}
+ button{background:#4f8cff;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-weight:600;cursor:pointer;font-size:13px}
+ button:hover{background:#3b7af0}button.warn{background:#b91c1c}button.warn:hover{background:#991b1b}
+ button:disabled{background:#334155;cursor:not-allowed}
+ #status{color:#94a3b8;font-size:12px;margin:10px 0}
  .barf{display:inline-block;height:8px;border-radius:2px;background:#4f8cff;vertical-align:middle}
- #status{color:#64748b;font-size:12px;margin:8px 0}
+ .barr{display:inline-block;height:8px;border-radius:2px;background:#334155;vertical-align:middle}
 </style></head><body>
-<h1>Probability Cup — Optimal Odds</h1>
-<div class="sub">model vs sharp market vs crowd, with the policy-adjusted SUBMIT value.
- Click a match to price it. (Pricing scrapes live odds — ~20s.)</div>
+<h1>Probability Cup — Control Panel</h1>
+<div class="sub">model vs sharp market vs crowd, with the policy SUBMIT value. You submit; nothing is sent without your click.</div>
+<div class="bar">
+ <span class="pill" id="armpill">autopilot: …</span>
+ <button id="armbtn" onclick="toggleArm()">…</button>
+ <button onclick="runAuto()" id="autobtn">Submit auto-eligible (all matches)</button>
+</div>
 <div class="matches" id="matches">loading matches…</div>
 <div id="status"></div>
+<div id="actions"></div>
 <div id="table"></div>
 <script>
+let CUR=null;
+async function refreshStatus(){
+ const s=await (await fetch('/api/status')).json();
+ const armed=s.armed;
+ document.getElementById('armpill').className='pill '+(armed?'armed':'disarmed');
+ document.getElementById('armpill').textContent='autopilot: '+(armed?'ARMED':'disarmed');
+ document.getElementById('armbtn').textContent=armed?'Disarm':'Arm autopilot';
+ document.getElementById('armbtn').className=armed?'warn':'';
+ document.getElementById('autobtn').disabled=!armed;
+}
+async function toggleArm(){
+ const s=await (await fetch('/api/status')).json();
+ const next=!s.armed;
+ if(next && !confirm('ARM autopilot? When armed, the "Submit auto-eligible" button will post live bets to the platform without per-question review.')) return;
+ await fetch('/api/arm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:next})});
+ refreshStatus();
+}
 async function loadMatches(){
- const r = await fetch('/api/matches'); const ms = await r.json();
- document.getElementById('matches').innerHTML = ms.map(m =>
-  `<div class="m" onclick="price('${m.name}','${m.home}','${m.away}','${m.date}')">
-    ${m.name}<div class="t">closes ${m.closes||''}</div></div>`).join('');
+ const ms=await (await fetch('/api/matches')).json();
+ document.getElementById('matches').innerHTML=ms.map(m=>
+  `<div class="m" onclick="price('${m.name}','${m.home}','${m.away}','${m.date}')">${m.name}<div class="t">closes ${m.closes||''}</div></div>`).join('');
 }
 async function price(name,home,away,date){
- document.getElementById('status').textContent = 'Pricing '+name+' … scraping sharp odds, ~20s';
- document.getElementById('table').innerHTML='';
- const r = await fetch(`/api/edge?home=${home}&away=${away}&date=${date}`);
- const d = await r.json();
+ CUR={name,home,away,date};
+ document.getElementById('status').textContent='Pricing '+name+' … scraping sharp odds (~20s)';
+ document.getElementById('table').innerHTML='';document.getElementById('actions').innerHTML='';
+ const d=await (await fetch(`/api/edge?home=${home}&away=${away}&date=${date}`)).json();
  if(d.error){document.getElementById('status').textContent='Error: '+d.error;return;}
- document.getElementById('status').textContent =
-   name+'  ·  lambdas '+d.lam_home+' / '+d.lam_away+'  ·  '+(d.market?'market live':'model only');
- const rows = d.rows.map(x=>{
-   const crowd = x.crowd!=null?(x.crowd*100).toFixed(0)+'%':'—';
-   const mkt = x.market!=null?(x.market*100).toFixed(0)+'%':'—';
-   const edge = x.edge!=null?(x.edge*100).toFixed(0):'—';
-   const eclass = (x.edge!=null&&x.edge>0.10)?'edge-hi':'';
-   const w = Math.round((x.confidence||0)*60);
-   return `<tr>
-     <td>${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
-     <td class="n">${(x.model*100).toFixed(0)}%</td>
-     <td class="n">${mkt}</td>
-     <td class="n">${crowd}</td>
-     <td class="n submit">${x.submit}%</td>
-     <td class="n ${eclass}">${edge}</td>
-     <td><span class="barf" style="width:${w}px"></span><span class="bar" style="width:${60-w}px"></span>
-         <span class="${x.auto?'auto':'hand'}"> ${x.auto?'AUTO':'hand'}</span></td>
-   </tr>`;}).join('');
- document.getElementById('table').innerHTML =
-   `<table><tr><th>question</th><th>model</th><th>market</th><th>crowd</th>
-    <th>submit</th><th>edge</th><th>confidence</th></tr>${rows}</table>`;
+ document.getElementById('status').textContent=name+'  ·  lambdas '+d.lam_home+' / '+d.lam_away+'  ·  '+(d.market?'market live':'model only');
+ const autoN=d.rows.filter(r=>r.auto).length;
+ document.getElementById('actions').innerHTML=
+   `<button onclick="doSubmit('all')">Submit all ${d.rows.length} to platform</button>
+    <button onclick="doSubmit('auto')">Submit ${autoN} auto-eligible</button>`;
+ document.getElementById('table').innerHTML=
+   `<table><tr><th>question</th><th>model</th><th>market</th><th>crowd</th><th>submit</th><th>edge</th><th>conf</th></tr>`+
+   d.rows.map(x=>{
+    const crowd=x.crowd!=null?(x.crowd*100).toFixed(0)+'%':'—';
+    const mkt=x.market!=null?(x.market*100).toFixed(0)+'%':'—';
+    const edge=x.edge!=null?(x.edge*100).toFixed(0):'—';
+    const w=Math.round((x.confidence||0)*60);
+    return `<tr><td>${x.question}${x.flag?' <span class="flag">'+x.flag+'</span>':''}</td>
+     <td class="n">${(x.model*100).toFixed(0)}%</td><td class="n">${mkt}</td><td class="n">${crowd}</td>
+     <td class="n submit">${x.submit}%</td><td class="n ${(x.edge>0.1?'edge-hi':'')}">${edge}</td>
+     <td><span class="barf" style="width:${w}px"></span><span class="barr" style="width:${60-w}px"></span> <span class="${x.auto?'auto':'hand'}">${x.auto?'AUTO':'hand'}</span></td></tr>`;}).join('')+`</table>`;
 }
-loadMatches();
+async function doSubmit(which){
+ if(!CUR)return;
+ if(!confirm(`Submit ${which==='auto'?'auto-eligible':'ALL'} predictions for ${CUR.name} to the platform?`))return;
+ document.getElementById('status').textContent='Submitting…';
+ const r=await (await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...CUR,which})})).json();
+ document.getElementById('status').textContent=r.error?('Error: '+r.error):(`Submitted ${r.submitted} prediction(s) for ${CUR.name}.`);
+}
+async function runAuto(){
+ if(!confirm('Run autopilot across ALL open matches and submit every auto-eligible question now?'))return;
+ document.getElementById('status').textContent='Autopilot running…';
+ const r=await (await fetch('/api/autopilot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})})).json();
+ document.getElementById('status').textContent=r.error?('Error: '+r.error):(`Autopilot submitted ${r.submitted} prediction(s) across ${r.matches} match(es).`);
+}
+refreshStatus();loadMatches();
 </script></body></html>"""
 
 
@@ -115,7 +150,6 @@ def _codes():
 class Handler(BaseHTTPRequestHandler):
     orch = None
     idx = {}
-    crit = {}
 
     def _send(self, code, body, ctype="application/json"):
         self.send_response(code)
@@ -123,18 +157,44 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body if isinstance(body, bytes) else body.encode())
 
+    def _body(self):
+        n = int(self.headers.get("Content-Length", 0))
+        return json.loads(self.rfile.read(n) or b"{}")
+
     def do_GET(self):                            # noqa: N802
-        path = urlparse(self.path)
-        if path.path == "/":
+        p = urlparse(self.path)
+        if p.path == "/":
             return self._send(200, PAGE, "text/html")
-        if path.path == "/api/matches":
+        if p.path == "/api/matches":
             return self._send(200, json.dumps(self._matches()))
-        if path.path == "/api/edge":
-            q = parse_qs(path.query)
+        if p.path == "/api/status":
+            return self._send(200, json.dumps({"armed": load_criteria(str(AUTO_CFG))["armed"]}))
+        if p.path == "/api/edge":
+            q = parse_qs(p.query)
             return self._send(200, json.dumps(self._edge(
-                q.get("home", [""])[0], q.get("away", [""])[0],
-                q.get("date", [""])[0])))
+                q.get("home", [""])[0], q.get("away", [""])[0], q.get("date", [""])[0])))
         return self._send(404, json.dumps({"error": "not found"}))
+
+    def do_POST(self):                           # noqa: N802
+        p = urlparse(self.path)
+        try:
+            body = self._body()
+            if p.path == "/api/arm":
+                cfg = json.loads(AUTO_CFG.read_text())
+                cfg["armed"] = bool(body.get("on"))
+                AUTO_CFG.write_text(json.dumps(cfg, indent=1))
+                return self._send(200, json.dumps({"armed": cfg["armed"]}))
+            if p.path == "/api/submit":
+                return self._send(200, json.dumps(self._submit(
+                    body["home"], body["away"], body["date"],
+                    body.get("which", "all"))))
+            if p.path == "/api/autopilot":
+                return self._send(200, json.dumps(self._autopilot()))
+        except Exception as e:                   # noqa: BLE001
+            return self._send(200, json.dumps({"error": str(e)}))
+        return self._send(404, json.dumps({"error": "not found"}))
+
+    # ----- data ops -----
 
     def _matches(self):
         try:
@@ -144,65 +204,94 @@ class Handler(BaseHTTPRequestHandler):
                 parts = m["name"].replace(" vs ", "|").split("|")
                 if len(parts) != 2:
                     continue
-                out.append({
-                    "name": m["name"],
-                    "home": self.idx.get(parts[0].strip().lower(),
-                                         parts[0].strip().upper()[:3]),
-                    "away": self.idx.get(parts[1].strip().lower(),
-                                         parts[1].strip().upper()[:3]),
-                    "date": (m.get("opening_time") or "")[:10],
-                    "closes": (m.get("closing_time") or "")[11:16]})
+                out.append({"name": m["name"],
+                            "home": self.idx.get(parts[0].strip().lower(),
+                                                 parts[0].strip().upper()[:3]),
+                            "away": self.idx.get(parts[1].strip().lower(),
+                                                 parts[1].strip().upper()[:3]),
+                            "date": (m.get("opening_time") or "")[:10],
+                            "closes": (m.get("closing_time") or "")[11:16]})
             return out
         except Exception as e:                   # noqa: BLE001
             return [{"name": f"(platform error: {e})", "home": "", "away": "",
                      "date": "", "closes": ""}]
 
-    def _edge(self, home, away, date):
+    def _price(self, home, away, date):
+        """Returns (rows, manifest) with market_id + submit value + auto flag."""
         key = f"{home}:{away}:{date}"
         hit = _cache.get(key)
-        if hit and time.time() - hit[0] < CACHE_TTL:
+        if hit and time.time() - hit[0] < 300:
             return hit[1]
+        client = PlatformClient()
+        match = next((m for m in client.list_matches(lobby_id=LOBBY_ID)
+                      if home in m["name"].upper() or away in m["name"].upper()), None)
+        if not match:
+            raise RuntimeError("match not found on platform")
+        markets = client.list_markets(LOBBY_ID, match["id"])
+        questions = [mk.get("question") or mk.get("title") for mk in markets]
+        manifest = self.orch.predict_match(home, away, date, questions, "group")
+        crowd = latest_crowd(DB) if Path(DB).exists() else {}
+        submit_values, rows = {}, []
+        for mk, pred in zip(markets, manifest["predictions"]):
+            hitc = fuzzy_lookup(pred["question_text"], crowd)
+            crowd_p = hitc["crowd_pct"] / 100.0 if hitc else None
+            sv = to_platform_probability(submission(
+                pred["final_probability"], crowd_p, pred["question_family"], "neutral"))
+            submit_values[pred["question_id"]] = sv
+            rows.append({"market_id": mk["id"], "question": pred["question_text"],
+                         "model": pred["model_probability"],
+                         "market": pred["market_probability"], "crowd": crowd_p,
+                         "submit": sv,
+                         "edge": (abs(pred["final_probability"] - crowd_p)
+                                  if crowd_p is not None else None),
+                         "flag": "FALLBACK" if pred["source"] == "fallback" else ""})
+        decisions = {d.question_id: d for d in plan_submissions(
+            manifest, submit_values, load_criteria(str(AUTO_CFG)))}
+        for row, pred in zip(rows, manifest["predictions"]):
+            d = decisions[pred["question_id"]]
+            row["confidence"] = d.confidence
+            row["auto"] = d.auto_eligible
+        result = {"lam_home": manifest["model_params"]["lambda_home"],
+                  "lam_away": manifest["model_params"]["lambda_away"],
+                  "market": manifest["market_available"], "rows": rows}
+        _cache[key] = (time.time(), result)
+        return result
+
+    def _edge(self, home, away, date):
         try:
-            client = PlatformClient()
-            match = next((m for m in client.list_matches(lobby_id=LOBBY_ID)
-                          if home in m["name"].upper() or away in m["name"].upper()),
-                         None)
-            if not match:
-                return {"error": "match not found on platform"}
-            markets = client.list_markets(LOBBY_ID, match["id"])
-            questions = [mk.get("question") or mk.get("title") for mk in markets]
-            manifest = self.orch.predict_match(home, away, date, questions, "group")
-            crowd = latest_crowd(DB) if Path(DB).exists() else {}
-            submit_values = {}
-            rows = []
-            for mk, pred in zip(markets, manifest["predictions"]):
-                hitc = fuzzy_lookup(pred["question_text"], crowd)
-                crowd_p = hitc["crowd_pct"] / 100.0 if hitc else None
-                sv = to_platform_probability(submission(
-                    pred["final_probability"], crowd_p,
-                    pred["question_family"], "neutral"))
-                submit_values[pred["question_id"]] = sv
-                rows.append({"question": pred["question_text"],
-                             "model": pred["model_probability"],
-                             "market": pred["market_probability"],
-                             "crowd": crowd_p, "submit": sv,
-                             "edge": (abs(pred["final_probability"] - crowd_p)
-                                      if crowd_p is not None else None),
-                             "flag": ("FALLBACK" if pred["source"] == "fallback"
-                                      else "")})
-            decisions = {d.question_id: d for d in
-                         plan_submissions(manifest, submit_values, self.crit)}
-            for row, pred in zip(rows, manifest["predictions"]):
-                d = decisions[pred["question_id"]]
-                row["confidence"] = d.confidence
-                row["auto"] = d.auto_eligible
-            result = {"lam_home": manifest["model_params"]["lambda_home"],
-                      "lam_away": manifest["model_params"]["lambda_away"],
-                      "market": manifest["market_available"], "rows": rows}
-            _cache[key] = (time.time(), result)
-            return result
+            return self._price(home, away, date)
         except Exception as e:                   # noqa: BLE001
             return {"error": str(e)}
+
+    def _submit(self, home, away, date, which):
+        data = self._price(home, away, date)
+        rows = [r for r in data["rows"] if which != "auto" or r["auto"]]
+        payload = [{"market_id": r["market_id"], "lobby_id": LOBBY_ID,
+                    "probability": r["submit"]} for r in rows]
+        if not payload:
+            return {"submitted": 0, "note": "nothing eligible"}
+        result = PlatformClient().submit_batch(payload)
+        return {"submitted": len(payload), "result": result}
+
+    def _autopilot(self):
+        crit = load_criteria(str(AUTO_CFG))
+        if not crit["armed"]:
+            return {"error": "autopilot disarmed — arm it first"}
+        client = PlatformClient()
+        total, nmatch = 0, 0
+        for m in client.list_matches(lobby_id=LOBBY_ID):
+            parts = m["name"].replace(" vs ", "|").split("|")
+            if len(parts) != 2:
+                continue
+            home = self.idx.get(parts[0].strip().lower(), parts[0].strip().upper()[:3])
+            away = self.idx.get(parts[1].strip().lower(), parts[1].strip().upper()[:3])
+            try:
+                res = self._submit(home, away, (m.get("opening_time") or "")[:10], "auto")
+                total += res.get("submitted", 0)
+                nmatch += 1
+            except Exception:                    # noqa: BLE001
+                continue
+        return {"submitted": total, "matches": nmatch}
 
     def log_message(self, *a):
         pass
@@ -213,14 +302,13 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=8770)
     args = ap.parse_args()
     Handler.idx = _codes()
-    Handler.crit = load_criteria(str(ROOT / "config" / "auto_trade.json"))
     Handler.orch = Orchestrator(
         config_dir=str(ROOT / "config"),
         params_path=str(ROOT / "params" / "dixon_coles.json"),
         db_path=DB if Path(DB).exists() else None,
         player_shares_path=str(ROOT / "config" / "player_shares.json"),
         online=True)
-    print(f"Dashboard: http://127.0.0.1:{args.port}")
+    print(f"Control panel: http://127.0.0.1:{args.port}")
     ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
 
 

@@ -73,7 +73,39 @@ Status of the three things asked for on June 13:
   only when `config/auto_trade.json` `armed=true` AND `--go`. **Ships DISARMED.
   Claude will not arm it — that is a human decision after watching dry runs.**
 
-Remaining, in priority order:
+Status (June 13): **A, B, C, D all DONE.** Details below; E (arming) is the
+human step that remains, by design.
+
+### A. Player involvement shares  ☑ DONE
+Built from ESPN per-match player stats: 940 players, 35 teams
+(`config/player_shares.json`). Involvement share + SOT/90 + minutes; sparse
+rates shrink toward position priors (fixed an Afif 3%→35% landmine). Props now
+carry real numbers under the 0.85 cap.
+
+### B. Referee card table  ☑ DONE
+52 referees with career card rates from ESPN officials + match cards
+(`config/referee_table.json`). Orchestrator looks up the assigned referee live
+(`src/espn_live.py`); multiplier shrinks below 10 matches.
+
+### C. ML model v2  ☑ DONE (honest gate result)
+Full pipeline on a 24,977-match club corpus with market-aware, deployment-ready
+features. Corner GBM beats the structural model (0.236 vs 0.243) but not the
+base rate (0.233) → **fails its ship-gate, stays disabled**; corners remain
+structural+market. Wiring auto-activates any future model that passes. The gate
+rejecting a weak model is the system working.
+
+### D. Odds redundancy + ops  ☑ DONE
+Live standings → motivation engine (`src/standings.py`, must-win/safe/eliminated
+from matchday 2); nightly refresh chain (`tools/nightly.sh`). DK/FD documented
+as manual-pin (geo/bot-sensitive); Pinnacle is the sharp anchor and needs none.
+
+### Control panel ☑ DONE
+`python tools/dashboard.py` → http://127.0.0.1:8770. Prices any match; YOU click
+"Submit all" / "Submit auto-eligible" (manual submission via the bot API), or
+arm the autopilot toggle to let "Submit auto-eligible (all matches)" run.
+
+---
+Historical detail of each item (as originally planned):
 
 ### A. Player involvement shares  (unblocks the weakest numbers on every sheet)
 Player props (Afif, Xhaka, …) run on flat 0.67 priors today — confidence 0.0,
