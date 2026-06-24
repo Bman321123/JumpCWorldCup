@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS LaunchAgent: runs one live-submit sweep every 10 minutes, at load,
+     and after reboot/login. Install:
+       cp deploy/com.jumpcworldcup.livesubmit.plist ~/Library/LaunchAgents/
+       launchctl load ~/Library/LaunchAgents/com.jumpcworldcup.livesubmit.plist
+     Stop the scheduler entirely:
+       launchctl unload ~/Library/LaunchAgents/com.jumpcworldcup.livesubmit.plist
+     INSTANT kill switch (stop submitting but keep the scheduler running):
+       set "armed": false in config/auto_trade.json
+     The Mac must be awake (or able to wake) for sweeps to run; launchd runs a
+     missed interval on wake. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jumpcworldcup.livesubmit</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/seniortech/Downloads/JumpCWorldCup/.venv/bin/python</string>
+    <string>/Users/seniortech/Downloads/JumpCWorldCup/tools/live_submit.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/seniortech/Downloads/JumpCWorldCup</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>OMP_NUM_THREADS</key>
+    <string>2</string>
+  </dict>
+  <key>StartInterval</key>
+  <integer>600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/seniortech/Downloads/JumpCWorldCup/data/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/seniortech/Downloads/JumpCWorldCup/data/launchd.err.log</string>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

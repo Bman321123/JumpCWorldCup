@@ -1,0 +1,13 @@
+2026-06-24T15:23:08 === sweep DRY (disarmed) | 22 open matches | 0 existing open predictions ===
+2026-06-24T15:23:11   SCO vs BRA         T- 2.6h  10 new  0 update-candidates
+2026-06-24T15:23:14   MAR vs Haiti       T- 2.6h  10 new  0 update-candidates
+2026-06-24T15:23:16   RSA vs KOR         T- 5.6h  10 new  0 update-candidates
+2026-06-24T15:23:19   CZE vs MEX         T- 5.6h  9 new  0 update-candidates
+2026-06-24T15:23:19 === DRY (disarmed): 4 priced | submit 39 (0 ok) | update 0 (0 ok) | 0 errors ===
+2026-06-24T15:30:24 === sweep DRY (disarmed) | 22 matches | 10 existing predictions | 0 bot-owned ===
+2026-06-24T15:30:28   SCO vs BRA         T- 2.5h round=group  10 new  0 update
+2026-06-24T15:30:31   MAR vs Haiti       T- 2.5h round=group  10 new  0 update
+2026-06-24T15:30:33   RSA vs KOR         T- 5.5h round=group  10 new  0 update
+2026-06-24T15:30:36   CZE vs MEX         T- 5.5h round=group  8 new  0 update
+2026-06-24T15:30:36   plan: 38 to submit, 0 to update
+2026-06-24T15:30:36 === DRY (disarmed): 4 priced | would submit 38, update 0 | 0 skipped 0 errors ===
