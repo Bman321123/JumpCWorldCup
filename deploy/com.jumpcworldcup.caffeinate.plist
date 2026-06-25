@@ -5,8 +5,9 @@
      (markets open only a few hours pre-kickoff and CLOSE at kickoff) falls while
      the machine sleeps.
 
-     `caffeinate -s` asserts "prevent system sleep" but ONLY while on AC power, so
-     it won't drain the battery — keep the Mac PLUGGED IN during the tournament.
+     `caffeinate -i` asserts "prevent idle system sleep" on BOTH AC and battery, so
+     the every-10-min sweeps keep firing even when unplugged (until the battery dies
+     — no software can run a laptop past empty).
 
      Install:
        cp deploy/com.jumpcworldcup.caffeinate.plist ~/Library/LaunchAgents/
@@ -14,11 +15,12 @@
      Stop:
        launchctl unload ~/Library/LaunchAgents/com.jumpcworldcup.caffeinate.plist
 
-     LIMITATION: caffeinate does NOT keep the Mac awake with the LID CLOSED. For
-     true lid-closed 24/7, either (a) keep the lid open + plugged in, (b) run it in
-     clamshell with an external display + power, (c) `sudo pmset -c disablesleep 1`
-     (needs your password, persists until set back to 0), or (d) move the daemon to
-     a cheap always-on cloud box (the robust machine-independent option). -->
+     LID CLOSED: caffeinate canNOT keep a Mac awake with the lid shut — that needs a
+     system setting (run once, persists across reboots until set back to 0):
+       sudo pmset -a disablesleep 1      # all power sources, incl. lid closed
+       sudo pmset -a disablesleep 0      # undo
+     Caveat: lid closed + on battery = heat with no airflow and a fast drain; a cheap
+     always-on cloud box is the robust machine-independent option. -->
 <plist version="1.0">
 <dict>
   <key>Label</key>
@@ -26,7 +28,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/caffeinate</string>
-    <string>-s</string>
+    <string>-i</string>
   </array>
   <key>RunAtLoad</key>
   <true/>
