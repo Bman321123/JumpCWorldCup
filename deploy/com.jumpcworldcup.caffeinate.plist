@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- macOS LaunchAgent: keeps the Mac awake so the every-10-min live-submit sweeps
+     actually FIRE 24/7. Without this, launchd does not wake a sleeping Mac on a
+     StartInterval, so the bot would miss any match whose narrow market window
+     (markets open only a few hours pre-kickoff and CLOSE at kickoff) falls while
+     the machine sleeps.
+
+     `caffeinate -s` asserts "prevent system sleep" but ONLY while on AC power, so
+     it won't drain the battery — keep the Mac PLUGGED IN during the tournament.
+
+     Install:
+       cp deploy/com.jumpcworldcup.caffeinate.plist ~/Library/LaunchAgents/
+       launchctl load ~/Library/LaunchAgents/com.jumpcworldcup.caffeinate.plist
+     Stop:
+       launchctl unload ~/Library/LaunchAgents/com.jumpcworldcup.caffeinate.plist
+
+     LIMITATION: caffeinate does NOT keep the Mac awake with the LID CLOSED. For
+     true lid-closed 24/7, either (a) keep the lid open + plugged in, (b) run it in
+     clamshell with an external display + power, (c) `sudo pmset -c disablesleep 1`
+     (needs your password, persists until set back to 0), or (d) move the daemon to
+     a cheap always-on cloud box (the robust machine-independent option). -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jumpcworldcup.caffeinate</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-s</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>

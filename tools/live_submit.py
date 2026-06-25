@@ -41,6 +41,7 @@ from src.crowd_capture import fuzzy_lookup, latest_crowd         # noqa: E402
 from src.orchestrator import Orchestrator                        # noqa: E402
 from src.platform_client import (PlatformClient,                 # noqa: E402
                                  to_platform_probability)
+from src.schedule import infer_round                             # noqa: E402
 from src.submission_policy import submission                     # noqa: E402
 
 LOBBY_ID = "8df8038c-fd2c-4a5f-be4e-0e11d5966c05"
@@ -51,9 +52,9 @@ JOURNAL = ROOT / "data" / "bot_submitted.json"
 LOCK = ROOT / "data" / "live_submit.lock"
 
 SUBMIT_WINDOW_H = 18.0     # start submitting once a match is within this window
-CLOSING_WINDOW_H = 1.5     # re-price + update OUR predictions inside this window
+CLOSING_WINDOW_H = 1.5     # always re-price + update OUR predictions inside this window
+UPDATE_DELTA = 2           # outside the closing window, update only on a line move >= this many points
 LOCK_STALE_S = 1800        # a lock older than this is considered abandoned
-GROUP_STAGE_END = "2026-06-27"   # last group-stage date; beyond it, round unknown
 POSITION = "neutral"       # submit our honest number (crowd is opportunity, not anchor)
 
 logger = logging.getLogger("live_submit")
@@ -97,13 +98,6 @@ def _hours_to(iso) -> float:
         return (ko - datetime.now(timezone.utc)).total_seconds() / 3600.0
     except Exception:                            # noqa: BLE001
         return 999.0
-
-
-def _infer_round(date_str: str):
-    """group through the group stage; None (=skip) for unmapped knockout dates."""
-    if not date_str:
-        return None
-    return "group" if date_str <= GROUP_STAGE_END else None
 
 
 def _load_journal() -> dict:
@@ -174,10 +168,10 @@ def sweep(dry: bool) -> dict:
             if h > SUBMIT_WINDOW_H or h < -0.15:
                 continue
             date = (m.get("opening_time") or "")[:10]
-            rnd = _infer_round(date)
+            rnd = infer_round(m.get("opening_time"))
             if rnd is None:
-                logger.warning("  %s: round unknown for %s — SKIP (avoid misprice).",
-                               m.get("name"), date)
+                logger.warning("  %s: kickoff %r not placeable in the tournament — "
+                               "SKIP.", m.get("name"), m.get("opening_time"))
                 s["skipped"] += 1
                 continue
             parts = m.get("name", "").replace(" vs ", "|").split("|")
@@ -196,9 +190,11 @@ def sweep(dry: bool) -> dict:
             unsub = [mk for mk in markets
                      if mk["id"] not in existing and mk["id"] not in journal]
             near = h <= CLOSING_WINDOW_H
+            # markets we own and can re-price as the line moves (full pre-kickoff
+            # window, not just the closing window — this is the live market tracking)
             owned_open = [mk for mk in markets
                           if mk["id"] in existing and mk["id"] in journal]
-            if not unsub and not (near and owned_open):
+            if not unsub and not owned_open:
                 continue
 
             questions = [mk.get("question") or mk.get("title") or "" for mk in markets]
@@ -224,12 +220,14 @@ def sweep(dry: bool) -> dict:
                     new_payload.append({"market_id": mk["id"], "lobby_id": LOBBY_ID,
                                         "probability": sv, "_q": pred["question_text"]})
                     n_new += 1
-                elif near and mk["id"] in journal:   # only update OUR predictions
+                elif mk["id"] in journal and mk["id"] in existing:  # only OUR preds
                     try:
                         stored = int(round(float(existing[mk["id"]].get("probability"))))
                     except (TypeError, ValueError):
                         stored = -1
-                    if stored != sv:
+                    # closing window: track every change; earlier: only on a real
+                    # line move (>= UPDATE_DELTA points) so we don't churn on noise
+                    if stored != sv and (near or abs(sv - stored) >= UPDATE_DELTA):
                         updates.append((existing[mk["id"]]["id"], mk["id"], sv))
                         n_upd += 1
             logger.info("  %-18s T-%4.1fh round=%s  %d new  %d update",

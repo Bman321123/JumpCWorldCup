@@ -12,15 +12,17 @@ run() { echo "--- $* ---" | tee -a "$LOG"; "$@" >>"$LOG" 2>&1 || echo "  (failed
 
 # 1. fresh WC2026 match stats (team + players + referee)
 run $PY ingestion/ingest_espn.py --comps WC2026
-# 2. recompute per-team micro rates from all match stats
-run $PY ingestion/run_fbref_scrape.py --aggregate-only
-# 3. refresh player shares + referee table with new matches
-run $PY ingestion/build_player_shares.py
-run $PY ingestion/build_referee_table.py
-# 4. refresh international results, refit Dixon-Coles, refit calibrators
+# 2. refresh international results + refit Dixon-Coles (goal model) FIRST...
 run $PY ingestion/ingest_historical.py
 run $PY ingestion/ingest_elo.py
 run $PY ingestion/compute_parameters.py --since 2019-01-01 --elo params/elo.json
+# 3. ...THEN merge per-team micro rates into the freshly-fit params. Order matters:
+#    compute_parameters rewrites dixon_coles.json, so aggregate must run AFTER it or
+#    the micro rates get blanked (compute_parameters now also self-preserves them).
+run $PY ingestion/run_fbref_scrape.py --aggregate-only
+# 4. refresh player shares + referee table + calibrators with new matches
+run $PY ingestion/build_player_shares.py
+run $PY ingestion/build_referee_table.py
 run $PY calibration/train_calibrators.py
 # 5. refresh the ML micro-market models (corners/cards/sot/fouls) on the club
 #    corpus + re-run the ship-gate. Run ml/ingest_club.py weekly to grow the

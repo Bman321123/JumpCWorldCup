@@ -36,6 +36,23 @@ def _load_key() -> str:
     return key
 
 
+def _demojibake(obj):
+    """The platform feed double-encodes UTF-8 as Latin-1 ('Türkiye'->'TÃ¼rkiye',
+    'Sangaré'->'SangarÃ©'), which silently broke team/player name matching (whole
+    slates fell to manual-review fallback; accented player props priced as 0.99
+    team shots-on-target). Recursively repair every string in an API payload."""
+    if isinstance(obj, dict):
+        return {k: _demojibake(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_demojibake(v) for v in obj]
+    if isinstance(obj, str) and ("Ã" in obj or "Â" in obj):
+        try:
+            return obj.encode("latin-1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return obj                       # not recoverable mojibake — leave as-is
+    return obj
+
+
 class PlatformClient:
     def __init__(self, api_key: Optional[str] = None):
         self.key = api_key or _load_key()
@@ -88,6 +105,7 @@ class PlatformClient:
                     out.append(json.loads(block["text"]))
                 except (json.JSONDecodeError, TypeError):
                     out.append(block["text"])
+        out = [_demojibake(o) for o in out]
         if len(out) == 1:
             return out[0]
         return {"blocks": out, "raw": result}
