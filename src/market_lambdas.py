@@ -53,6 +53,15 @@ def market_implied_lambdas(home_win: float, away_win: float,
                            ) -> Optional[Tuple[float, float]]:
     """Solve for (lam_home, lam_away) matching the devigged market. Returns None
     on failure (caller keeps structural lambdas)."""
+    # Scrapers hand totals back as STRING keys/values ("2.5"), which crashed the
+    # solve at np.ceil(total_line) and silently killed the sharp-line anchor on
+    # every match. Coerce defensively; bail to structural if anything isn't numeric.
+    try:
+        home_win, away_win = float(home_win), float(away_win)
+        total_line = None if total_line is None else float(total_line)
+        p_over = None if p_over is None else float(p_over)
+    except (TypeError, ValueError):
+        return None
     have_total = total_line is not None and p_over is not None
 
     def resid(x):

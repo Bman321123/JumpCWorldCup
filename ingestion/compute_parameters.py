@@ -53,6 +53,25 @@ def main() -> None:
                              elo_defense_prior=priors["defense"],
                              asof=args.asof, maxiter=args.maxiter)
 
+    # The goal fit only produces attack/defense/mu/gamma/rho. The per-team MICRO
+    # rates (corners/cards/SOT/fouls/offsides) are merged in separately by
+    # run_fbref_scrape.aggregate(). Preserve any existing micro rates so a refit
+    # never silently blanks them and drops micro markets to league-average defaults
+    # (the nightly chain used to do exactly that — aggregate ran before this step).
+    if Path(args.out).exists():
+        from src.stats_engine import ModelParameters
+        old = ModelParameters.load(args.out)
+        carried = 0
+        for table in ("corner_for", "corner_against", "yellow_rates", "red_rates",
+                      "offside_rates", "sot_rates", "sot_against", "fouls_rates",
+                      "half_shares"):
+            prev = getattr(old, table, None)
+            if prev and not getattr(params, table, None):
+                setattr(params, table, prev)
+                carried += len(prev)
+        if carried:
+            print(f"Preserved micro rates from {args.out} ({carried} entries)")
+
     # Engine lookups are keyed by FIFA code (MEX), the dataset by name (Mexico):
     # add code-keyed aliases for the 48 WC teams from config/groups.json.
     with open(ROOT / "config" / "groups.json") as f:

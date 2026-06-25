@@ -27,12 +27,31 @@ BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 DELAY_S = 0.5
 
 COMPS = {
+    # major finals
+    "WC2014": ("fifa.world", "20140612-20140713"),
     "WC2018": ("fifa.world", "20180614-20180715"),
     "WC2022": ("fifa.world", "20221120-20221218"),
+    "EURO2020": ("uefa.euro", "20210611-20210711"),
     "EURO2024": ("uefa.euro", "20240614-20240714"),
+    "COPA2021": ("conmebol.america", "20210613-20210710"),
     "COPA2024": ("conmebol.america", "20240620-20240715"),
+    # continental cups — these are the African/Asian/CONCACAF WC teams' real games
+    "AFCON2023": ("caf.nations", "20240113-20240211"),
+    "ASIANCUP2023": ("afc.asian.cup", "20240112-20240210"),
+    "GOLDCUP2023": ("concacaf.gold", "20230624-20230716"),
+    "GOLDCUP2025": ("concacaf.gold", "20250614-20250706"),
+    "NATIONS2024": ("uefa.nations", "20240905-20241119"),
+    "NATIONS2025": ("uefa.nations", "20250320-20250608"),
+    # WC2026 qualifiers — the most recent form for the actual tournament teams
+    "WCQ_UEFA": ("fifa.worldq.uefa", "20250321-20251118"),
+    "WCQ_CAF": ("fifa.worldq.caf", "20250301-20251118"),
+    "WCQ_AFC": ("fifa.worldq.afc", "20241101-20251118"),
+    "WCQ_CONCACAF": ("fifa.worldq.concacaf", "20250601-20251118"),
+    # the tournament itself, so far
     "WC2026": ("fifa.world", f"20260611-{date.today().strftime('%Y%m%d')}"),
 }
+# every comp except WC2026 is historical/static; this is the default broad backfill
+ALL_BACKFILL = ",".join(c for c in COMPS if c != "WC2026")
 STAT_MAP = {"wonCorners": "corners", "yellowCards": "yellows",
             "redCards": "reds", "offsides": "offsides",
             "shotsOnTarget": "sot", "foulsCommitted": "fouls"}
@@ -137,11 +156,23 @@ def _parse_referee(summary: dict) -> str | None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--comps", default="WC2018,WC2022,EURO2024,COPA2024,WC2026")
+    ap.add_argument("--comps", default=ALL_BACKFILL + ",WC2026",
+                    help="comma list of COMPS keys, or 'ALL' for everything")
+    ap.add_argument("--no-aggregate", action="store_true",
+                    help="skip the micro-rate merge (do it once at the end of a batch)")
     args = ap.parse_args()
-    for comp in args.comps.split(","):
-        comp = comp.strip()
-        if comp in COMPS:
-            league, dates = COMPS[comp]
-            ingest(comp, league, dates)
-    aggregate()
+    comps = list(COMPS) if args.comps.strip().upper() == "ALL" else \
+        [c.strip() for c in args.comps.split(",")]
+    total = 0
+    for comp in comps:
+        if comp not in COMPS:
+            print(f"unknown comp {comp!r} — skipping")
+            continue
+        league, dates = COMPS[comp]
+        try:                                          # per-comp isolation
+            total += ingest(comp, league, dates)
+        except Exception as e:                        # noqa: BLE001
+            print(f"{comp}: FAILED ({e}) — continuing")
+    print(f"total match-stat files: {total}")
+    if not args.no_aggregate:
+        aggregate()

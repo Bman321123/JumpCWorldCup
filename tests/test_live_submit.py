@@ -28,11 +28,15 @@ def test_hours_to_robust():
     assert ls._hours_to("garbage") == 999.0
 
 
-def test_infer_round_skips_unmapped_knockout():
-    assert ls._infer_round("2026-06-24") == "group"     # group stage
-    assert ls._infer_round("2026-06-27") == "group"     # last group day
-    assert ls._infer_round("2026-07-05") is None        # knockout -> skip, not misprice
-    assert ls._infer_round("") is None
+def test_infer_round_prices_knockouts_and_late_group():
+    # knockouts are now PRICED (win=advance), not skipped
+    assert ls.infer_round("2026-06-24T22:00:00Z") == "group"
+    assert ls.infer_round("2026-06-28T19:00:00Z") == "round_of_32"
+    assert ls.infer_round("2026-07-05T19:00:00Z") == "round_of_16"
+    assert ls.infer_round("2026-07-19T22:00:00Z") == "final"
+    # final group games kick off past midnight UTC but stay GROUP (the old skip bug)
+    assert ls.infer_round("2026-06-28T02:00:00Z") == "group"
+    assert ls.infer_round("garbage") is None
 
 
 def test_journal_roundtrip(tmp_path, monkeypatch):

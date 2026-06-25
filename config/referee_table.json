@@ -1,23 +1,371 @@
 {
  "_source": "ESPN match officials + card counts",
  "referees": {
-  "jess valenzuela": {
-   "name": "Jes\u00fas Valenzuela",
+  "amin omar": {
+   "name": "Amin Omar",
+   "yellow_per_match": 2.2,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "abongile tom": {
+   "name": "Abongile Tom",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "beida damane": {
+   "name": "Beida Damane",
+   "yellow_per_match": 2.75,
+   "red_per_match": 0.5,
+   "total_matches": 4
+  },
+  "jeanjacques ndala ngambo": {
+   "name": "Jean-Jacques Ndala Ngambo",
+   "yellow_per_match": 3.667,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "rdouane jiyed": {
+   "name": "R\u00e9douane Jiyed",
    "yellow_per_match": 3.0,
+   "red_per_match": 0.5,
+   "total_matches": 2
+  },
+  "ibrahim mutaz": {
+   "name": "Ibrahim Mutaz",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "issa sy": {
+   "name": "Issa Sy",
+   "yellow_per_match": 3.5,
    "red_per_match": 0.0,
    "total_matches": 4
   },
+  "jalal jayed": {
+   "name": "Jalal Jayed",
+   "yellow_per_match": 2.333,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "omar artan": {
+   "name": "Omar Artan",
+   "yellow_per_match": 2.25,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "mohamed hussein": {
+   "name": "Mohamed Hussein",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "alhadi allaou mahamat": {
+   "name": "Alhadi Allaou Mahamat",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.5,
+   "total_matches": 2
+  },
+  "bamlak tessema weyesa": {
+   "name": "Bamlak Tessema Weyesa",
+   "yellow_per_match": 2.333,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "samuel uwikunda": {
+   "name": "Samuel Uwikunda",
+   "yellow_per_match": 1.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "mahmood ismail": {
+   "name": "Mahmood Ismail",
+   "yellow_per_match": 4.333,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "mustapha ghorbal": {
+   "name": "Mustapha Ghorbal",
+   "yellow_per_match": 2.4,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "abdelaziz bouh": {
+   "name": "Abdelaziz Bouh",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "pierre atcho": {
+   "name": "Pierre Atcho",
+   "yellow_per_match": 2.75,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "samir guezzaz": {
+   "name": "Samir Guezzaz",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mohamed maarouf eid mansour": {
+   "name": "Mohamed Maarouf Eid Mansour",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "daniel laryea": {
+   "name": "Daniel Laryea",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "kamaku waweru": {
+   "name": "Kamaku Waweru",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "djindo louis houngnandande": {
+   "name": "Djindo Louis Houngnandande",
+   "yellow_per_match": 3.0,
+   "red_per_match": 1.0,
+   "total_matches": 2
+  },
+  "youcef gamouh": {
+   "name": "Youcef Gamouh",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "bouchra karboubi": {
+   "name": "Bouchra Karboubi",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "pacifique ndabihawenimana": {
+   "name": "Pacifique Ndabihawenimana",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "patrice mebiame": {
+   "name": "Patrice Mebiame",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mohamed elsaid": {
+   "name": "Mohamed Elsaid",
+   "yellow_per_match": 4.0,
+   "red_per_match": 1.5,
+   "total_matches": 2
+  },
+  "alireza faghani": {
+   "name": "Alireza Faghani",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.4,
+   "total_matches": 5
+  },
+  "yoshimi yamashita": {
+   "name": "Yoshimi Yamashita",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mohammed khled al hoish": {
+   "name": "Mohammed Khled Al Hoish",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "ahmed abu bakar said al kaf": {
+   "name": "Ahmed Abu Bakar Said Al Kaf",
+   "yellow_per_match": 2.333,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "jonghyeok kim": {
+   "name": "Jong-Hyeok Kim",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.5,
+   "total_matches": 2
+  },
+  "muhammad taqi aljaafari": {
+   "name": "Muhammad Taqi Al-Jaafari",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "abdulrahman aljassim": {
+   "name": "Abdulrahman Al-Jassim",
+   "yellow_per_match": 4.75,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "ma ning": {
+   "name": "Ma Ning",
+   "yellow_per_match": 4.8,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "ilgiz tantashev": {
+   "name": "Ilgiz Tantashev",
+   "yellow_per_match": 3.25,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "mohammed abulla hassan mohamed": {
+   "name": "Mohammed Abulla Hassan Mohamed",
+   "yellow_per_match": 3.6,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "adham mohammad": {
+   "name": "Adham Mohammad",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "shaun evans": {
+   "name": "Shaun Evans",
+   "yellow_per_match": 1.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ko hyungjin": {
+   "name": "Ko Hyung-Jin",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "hiroyuki kimura": {
+   "name": "Hiroyuki Kimura",
+   "yellow_per_match": 6.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "adel al naqbi": {
+   "name": "Adel Al Naqbi",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "fu ming": {
+   "name": "Fu Ming",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ahmad al ali": {
+   "name": "Ahmad Al Ali",
+   "yellow_per_match": 3.25,
+   "red_per_match": 0.5,
+   "total_matches": 4
+  },
+  "khalid saleh alturais": {
+   "name": "Khalid Saleh Al-Turais",
+   "yellow_per_match": 1.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "sadullo gulmurodi": {
+   "name": "Sadullo Gulmurodi",
+   "yellow_per_match": 2.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "hanna hattab": {
+   "name": "Hanna Hattab",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "salman ahmad flahi": {
+   "name": "Salman Ahmad Flahi",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mooud bonyadifard": {
+   "name": "Mooud Bonyadifard",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "jumpei iida": {
+   "name": "Jumpei Iida",
+   "yellow_per_match": 3.0,
+   "red_per_match": 2.0,
+   "total_matches": 1
+  },
+  "abdullah jamali": {
+   "name": "Abdullah Jamali",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mohanad qasim eesee sarray": {
+   "name": "Mohanad Qasim Eesee Sarray",
+   "yellow_per_match": 5.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "yosuke araki": {
+   "name": "Yosuke Araki",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "sivakorn puudom": {
+   "name": "Sivakorn Pu-Udom",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "muhammed nazmi nasaruddin": {
+   "name": "Muhammed Nazmi Nasaruddin",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.5,
+   "total_matches": 2
+  },
+  "khamis al marri": {
+   "name": "Khamis Al Marri",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "omar al ali": {
+   "name": "Omar Al Ali",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "heegon kim": {
+   "name": "Hee-Gon Kim",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "jess valenzuela": {
+   "name": "Jes\u00fas Valenzuela",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 6
+  },
   "wilton pereira sampaio": {
    "name": "Wilton Pereira Sampaio",
-   "yellow_per_match": 3.429,
-   "red_per_match": 0.429,
-   "total_matches": 7
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.375,
+   "total_matches": 8
   },
   "ismail elfath": {
    "name": "Ismail Elfath",
-   "yellow_per_match": 3.25,
-   "red_per_match": 0.25,
-   "total_matches": 4
+   "yellow_per_match": 3.2,
+   "red_per_match": 0.2,
+   "total_matches": 5
   },
   "wilmer roldn": {
    "name": "Wilmer Rold\u00e1n",
@@ -27,9 +375,9 @@
   },
   "maurizio mariani": {
    "name": "Maurizio Mariani",
-   "yellow_per_match": 3.333,
+   "yellow_per_match": 3.182,
    "red_per_match": 0.0,
-   "total_matches": 3
+   "total_matches": 11
   },
   "piero maza": {
    "name": "Piero Maza",
@@ -39,15 +387,15 @@
   },
   "dario herrera": {
    "name": "Dario Herrera",
-   "yellow_per_match": 3.5,
-   "red_per_match": 0.5,
-   "total_matches": 2
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.667,
+   "total_matches": 3
   },
   "csar arturo ramos palazuelos": {
    "name": "C\u00e9sar Arturo Ramos Palazuelos",
-   "yellow_per_match": 3.286,
-   "red_per_match": 0.286,
-   "total_matches": 7
+   "yellow_per_match": 2.75,
+   "red_per_match": 0.167,
+   "total_matches": 12
   },
   "andrs matonte": {
    "name": "Andr\u00e9s Matonte",
@@ -57,39 +405,39 @@
   },
   "mario escobar": {
    "name": "Mario Escobar",
-   "yellow_per_match": 3.667,
-   "red_per_match": 0.667,
-   "total_matches": 3
+   "yellow_per_match": 3.556,
+   "red_per_match": 0.222,
+   "total_matches": 9
   },
   "raphael claus": {
    "name": "Raphael Claus",
-   "yellow_per_match": 3.5,
+   "yellow_per_match": 3.2,
    "red_per_match": 0.0,
-   "total_matches": 4
+   "total_matches": 5
   },
   "cristin garay": {
    "name": "Cristi\u00e1n Garay",
-   "yellow_per_match": 4.0,
-   "red_per_match": 0.0,
-   "total_matches": 1
+   "yellow_per_match": 3.0,
+   "red_per_match": 1.0,
+   "total_matches": 2
   },
   "ivn arcides barton cisneros": {
    "name": "Iv\u00e1n Arcides Barton Cisneros",
-   "yellow_per_match": 2.0,
-   "red_per_match": 0.5,
-   "total_matches": 4
+   "yellow_per_match": 2.333,
+   "red_per_match": 0.667,
+   "total_matches": 6
   },
   "juan gabriel bentez": {
    "name": "Juan Gabriel Ben\u00edtez",
-   "yellow_per_match": 1.0,
+   "yellow_per_match": 0.5,
    "red_per_match": 0.0,
-   "total_matches": 1
+   "total_matches": 2
   },
   "gustavo tejera": {
    "name": "Gustavo Tejera",
-   "yellow_per_match": 3.0,
+   "yellow_per_match": 2.5,
    "red_per_match": 0.0,
-   "total_matches": 1
+   "total_matches": 2
   },
   "kevin paolo ortega": {
    "name": "Kevin Paolo Ortega",
@@ -105,9 +453,9 @@
   },
   "yael falcn prez": {
    "name": "Yael Falc\u00f3n P\u00e9rez",
-   "yellow_per_match": 6.0,
+   "yellow_per_match": 2.667,
    "red_per_match": 0.0,
-   "total_matches": 1
+   "total_matches": 3
   },
   "alexis herrera": {
    "name": "Alexis Herrera",
@@ -117,33 +465,33 @@
   },
   "clment turpin": {
    "name": "Cl\u00e9ment Turpin",
-   "yellow_per_match": 2.833,
-   "red_per_match": 0.333,
-   "total_matches": 6
+   "yellow_per_match": 2.538,
+   "red_per_match": 0.308,
+   "total_matches": 13
   },
   "slavko vincici": {
    "name": "Slavko Vincici",
-   "yellow_per_match": 4.2,
+   "yellow_per_match": 3.571,
    "red_per_match": 0.0,
-   "total_matches": 5
+   "total_matches": 14
   },
   "michael oliver": {
    "name": "Michael Oliver",
-   "yellow_per_match": 3.429,
-   "red_per_match": 0.0,
-   "total_matches": 7
+   "yellow_per_match": 3.667,
+   "red_per_match": 0.067,
+   "total_matches": 15
   },
   "felix zwayer": {
    "name": "Felix Zwayer",
-   "yellow_per_match": 4.75,
-   "red_per_match": 0.0,
-   "total_matches": 4
+   "yellow_per_match": 5.182,
+   "red_per_match": 0.182,
+   "total_matches": 11
   },
   "sandro scharer": {
    "name": "Sandro Scharer",
-   "yellow_per_match": 3.5,
+   "yellow_per_match": 3.333,
    "red_per_match": 0.0,
-   "total_matches": 2
+   "total_matches": 6
   },
   "daniele orsato": {
    "name": "Daniele Orsato",
@@ -159,87 +507,777 @@
   },
   "jess gil manzano": {
    "name": "Jes\u00fas Gil Manzano",
-   "yellow_per_match": 7.0,
-   "red_per_match": 0.0,
-   "total_matches": 1
+   "yellow_per_match": 4.429,
+   "red_per_match": 0.429,
+   "total_matches": 7
   },
   "halil meler": {
    "name": "Halil Meler",
-   "yellow_per_match": 6.333,
+   "yellow_per_match": 4.556,
    "red_per_match": 0.0,
-   "total_matches": 3
+   "total_matches": 9
   },
   "glenn nyberg": {
    "name": "Glenn Nyberg",
-   "yellow_per_match": 3.333,
-   "red_per_match": 0.0,
-   "total_matches": 3
+   "yellow_per_match": 3.545,
+   "red_per_match": 0.182,
+   "total_matches": 11
   },
   "facundo tello": {
    "name": "Facundo Tello",
-   "yellow_per_match": 3.5,
-   "red_per_match": 0.167,
-   "total_matches": 6
+   "yellow_per_match": 3.286,
+   "red_per_match": 0.143,
+   "total_matches": 7
   },
   "marco guida": {
    "name": "Marco Guida",
-   "yellow_per_match": 3.5,
+   "yellow_per_match": 3.667,
    "red_per_match": 0.0,
-   "total_matches": 2
+   "total_matches": 6
   },
   "ivan kruzliak": {
    "name": "Ivan Kruzliak",
-   "yellow_per_match": 4.0,
+   "yellow_per_match": 4.125,
    "red_per_match": 0.0,
-   "total_matches": 2
+   "total_matches": 8
   },
   "francois letexier": {
    "name": "Francois Letexier",
-   "yellow_per_match": 3.5,
+   "yellow_per_match": 3.455,
    "red_per_match": 0.0,
-   "total_matches": 4
+   "total_matches": 11
   },
   "danny makkelie": {
    "name": "Danny Makkelie",
-   "yellow_per_match": 4.8,
+   "yellow_per_match": 4.0,
    "red_per_match": 0.0,
-   "total_matches": 5
+   "total_matches": 11
   },
   "istvan kovacs": {
    "name": "Istvan Kovacs",
-   "yellow_per_match": 11.0,
-   "red_per_match": 1.0,
-   "total_matches": 2
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.429,
+   "total_matches": 7
   },
   "anthony taylor": {
    "name": "Anthony Taylor",
-   "yellow_per_match": 4.2,
-   "red_per_match": 0.2,
-   "total_matches": 5
+   "yellow_per_match": 3.364,
+   "red_per_match": 0.091,
+   "total_matches": 11
   },
   "szymon marciniak": {
    "name": "Szymon Marciniak",
+   "yellow_per_match": 3.1,
+   "red_per_match": 0.1,
+   "total_matches": 10
+  },
+  "daniel siebert": {
+   "name": "Daniel Siebert",
+   "yellow_per_match": 5.5,
+   "red_per_match": 0.2,
+   "total_matches": 10
+  },
+  "said martinez": {
+   "name": "Said Martinez",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "daneion parchment": {
+   "name": "Daneion Parchment",
+   "yellow_per_match": 8.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "adonai gonzalez": {
+   "name": "Adonai Gonzalez",
+   "yellow_per_match": 2.25,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "drew fischer": {
+   "name": "Drew Fischer",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "rubiel vazquez": {
+   "name": "Rubiel Vazquez",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "oshane nation": {
+   "name": "Oshane Nation",
+   "yellow_per_match": 5.2,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "fernando guerrero ramrez": {
+   "name": "Fernando Guerrero Ram\u00edrez",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "juan caldern": {
+   "name": "Juan Calder\u00f3n",
+   "yellow_per_match": 4.4,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "armando villarreal": {
+   "name": "Armando Villarreal",
+   "yellow_per_match": 6.0,
+   "red_per_match": 2.0,
+   "total_matches": 1
+  },
+  "walter lopez": {
+   "name": "Walter Lopez",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 6
+  },
+  "martnez hctor": {
+   "name": "Mart\u00ednez, H\u00e9ctor",
    "yellow_per_match": 3.8,
    "red_per_match": 0.0,
    "total_matches": 5
   },
-  "daniel siebert": {
-   "name": "Daniel Siebert",
-   "yellow_per_match": 5.75,
+  "marco antonio ortiz nava": {
+   "name": "Marco Antonio Ortiz Nava",
+   "yellow_per_match": 4.75,
    "red_per_match": 0.0,
    "total_matches": 4
+  },
+  "keylor herrera villalobos": {
+   "name": "Keylor Herrera Villalobos",
+   "yellow_per_match": 1.75,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "bryan lpez": {
+   "name": "Bryan L\u00f3pez",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "joseph dickerson": {
+   "name": "Joseph Dickerson",
+   "yellow_per_match": 3.5,
+   "red_per_match": 1.0,
+   "total_matches": 2
+  },
+  "katia itzel garca": {
+   "name": "Katia Itzel Garc\u00eda",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "lukasz szpala": {
+   "name": "Lukasz Szpala",
+   "yellow_per_match": 5.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "selvin brown": {
+   "name": "Selvin Brown",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ismael cornejo": {
+   "name": "Ismael Cornejo",
+   "yellow_per_match": 4.5,
+   "red_per_match": 1.0,
+   "total_matches": 2
+  },
+  "kwinsi williams": {
+   "name": "Kwinsi Williams",
+   "yellow_per_match": 8.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "balazs berke": {
+   "name": "Balazs Berke",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ovidiu alin hategan": {
+   "name": "Ovidiu Alin Hategan",
+   "yellow_per_match": 4.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "serdar gzbyk": {
+   "name": "Serdar G\u00f6z\u00fcb\u00fcy\u00fck",
+   "yellow_per_match": 5.167,
+   "red_per_match": 0.0,
+   "total_matches": 6
+  },
+  "andris treimanis": {
+   "name": "Andris Treimanis",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "marian barbu": {
+   "name": "Marian Barbu",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "matej jug": {
+   "name": "Matej Jug",
+   "yellow_per_match": 3.6,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "allard lindhout": {
+   "name": "Allard Lindhout",
+   "yellow_per_match": 5.2,
+   "red_per_match": 0.4,
+   "total_matches": 5
+  },
+  "rohit saggi": {
+   "name": "Rohit Saggi",
+   "yellow_per_match": 3.25,
+   "red_per_match": 0.75,
+   "total_matches": 4
+  },
+  "willy delajod": {
+   "name": "Willy Delajod",
+   "yellow_per_match": 2.75,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "igor pajac": {
+   "name": "Igor Pajac",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "aliyar aghayev": {
+   "name": "Aliyar Aghayev",
+   "yellow_per_match": 3.2,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "radu petrescu": {
+   "name": "Radu Petrescu",
+   "yellow_per_match": 3.6,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "manfredas lukjancukas": {
+   "name": "Manfredas Lukjancukas",
+   "yellow_per_match": 2.667,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "nenad minakovic": {
+   "name": "Nenad Minakovic",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "orel grinfeld": {
+   "name": "Orel Grinfeld",
+   "yellow_per_match": 3.25,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "mykola balakin": {
+   "name": "Mykola Balakin",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "jos mara snchez martnez": {
+   "name": "Jos\u00e9 Mar\u00eda S\u00e1nchez Mart\u00ednez",
+   "yellow_per_match": 3.6,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "donatas rumsas": {
+   "name": "Donatas Rumsas",
+   "yellow_per_match": 3.167,
+   "red_per_match": 0.167,
+   "total_matches": 6
+  },
+  "urs schnyder": {
+   "name": "Urs Schnyder",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "lus godinho": {
+   "name": "Lu\u00eds Godinho",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "lawrence visser": {
+   "name": "Lawrence Visser",
+   "yellow_per_match": 5.75,
+   "red_per_match": 0.5,
+   "total_matches": 4
+  },
+  "anastasios sidiropoulos": {
+   "name": "Anastasios Sidiropoulos ",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "chris kavanagh": {
+   "name": "Chris Kavanagh",
+   "yellow_per_match": 4.4,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "damian sylwestrzak": {
+   "name": "Damian Sylwestrzak",
+   "yellow_per_match": 3.8,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "kristo  tohver": {
+   "name": "Kristo  Tohver ",
+   "yellow_per_match": 9.0,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "irfan peljto": {
+   "name": "Irfan Peljto",
+   "yellow_per_match": 4.2,
+   "red_per_match": 0.4,
+   "total_matches": 5
+  },
+  "sven jablonski": {
+   "name": "Sven Jablonski",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "tobias stieler": {
+   "name": "Tobias Stieler",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "sebastian gishamer": {
+   "name": "Sebastian Gishamer",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "georgi kabakov": {
+   "name": "Georgi Kabakov ",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "enea jorgji": {
+   "name": "Enea Jorgji",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.5,
+   "total_matches": 2
+  },
+  "joo pinheiro": {
+   "name": "Jo\u00e3o Pinheiro",
+   "yellow_per_match": 2.857,
+   "red_per_match": 0.143,
+   "total_matches": 7
+  },
+  "rade obrenovic": {
+   "name": "Rade Obrenovic",
+   "yellow_per_match": 4.4,
+   "red_per_match": 0.0,
+   "total_matches": 5
+  },
+  "nikola dabanovic": {
+   "name": "Nikola Dabanovic",
+   "yellow_per_match": 2.8,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "erik lambrechts": {
+   "name": "Erik Lambrechts",
+   "yellow_per_match": 4.4,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "mohammed alhakim": {
+   "name": "Mohammed Al-Hakim",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "john beaton": {
+   "name": "John Beaton",
+   "yellow_per_match": 4.25,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "morten krogh": {
+   "name": "Morten Krogh",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "espen eskas": {
+   "name": "Espen Eskas",
+   "yellow_per_match": 4.429,
+   "red_per_match": 0.143,
+   "total_matches": 7
+  },
+  "davide massa": {
+   "name": "Davide Massa",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.143,
+   "total_matches": 7
+  },
+  "duje strukan": {
+   "name": "Duje Strukan",
+   "yellow_per_match": 4.333,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "harm osmers": {
+   "name": "Harm Osmers",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.667,
+   "total_matches": 3
+  },
+  "oleksiy derevinskyi": {
+   "name": "Oleksiy Derevinskyi",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "andrea colombo": {
+   "name": "Andrea Colombo",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "don robertson": {
+   "name": "Don Robertson",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "a stavrev": {
+   "name": "A Stavrev",
+   "yellow_per_match": 0.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "jakob sundberg": {
+   "name": "Jakob Sundberg",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "milos milanovic": {
+   "name": "Milos Milanovic",
+   "yellow_per_match": 8.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "robert harvey": {
+   "name": "Robert Harvey",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "benoit bastien": {
+   "name": "Benoit Bastien",
+   "yellow_per_match": 3.75,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "lukas fhndrich": {
+   "name": "Lukas F\u00e4hndrich",
+   "yellow_per_match": 2.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "julian weinberger": {
+   "name": "Julian Weinberger",
+   "yellow_per_match": 3.333,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "daniele chiffi": {
+   "name": "Daniele Chiffi",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "antoni bandic": {
+   "name": "Antoni Bandic",
+   "yellow_per_match": 7.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "ondrej berka": {
+   "name": "Ondrej Berka",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "david smajc": {
+   "name": "David Smajc",
+   "yellow_per_match": 11.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "sascha stegemann": {
+   "name": "Sascha Stegemann",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "simone sozza": {
+   "name": "Simone Sozza",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "henrik nalbandyan": {
+   "name": "Henrik Nalbandyan",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "craig pawson": {
+   "name": "Craig Pawson",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "stuart attwell": {
+   "name": "Stuart Attwell",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "giorgi kruashvili": {
+   "name": "Giorgi Kruashvili",
+   "yellow_per_match": 3.667,
+   "red_per_match": 0.667,
+   "total_matches": 3
+  },
+  "horatiu fesnic": {
+   "name": "Horatiu Fesnic",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.25,
+   "total_matches": 4
+  },
+  "john brooks": {
+   "name": "John Brooks",
+   "yellow_per_match": 5.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "tamas bognar": {
+   "name": "Tamas Bognar",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "joey kooij": {
+   "name": "Joey Kooij",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "philip farrugia": {
+   "name": "Philip Farrugia",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "juxhin xhaja": {
+   "name": "Juxhin Xhaja",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ricardo de burgos bengoetxea": {
+   "name": "Ricardo de Burgos Bengoetxea",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "filip glova": {
+   "name": "Filip Glova",
+   "yellow_per_match": 3.667,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "guillermo cuadra fernndez": {
+   "name": "Guillermo Cuadra Fern\u00e1ndez",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "atilla karaoglan": {
+   "name": "Atilla Karaoglan",
+   "yellow_per_match": 8.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "jerome brisard": {
+   "name": "Jerome Brisard",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "alejandro jos hernndez hernndez": {
+   "name": "Alejandro Jos\u00e9 Hern\u00e1ndez Hern\u00e1ndez",
+   "yellow_per_match": 3.2,
+   "red_per_match": 0.2,
+   "total_matches": 5
+  },
+  "daniel stefanski": {
+   "name": "Daniel Stefanski",
+   "yellow_per_match": 5.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "nick walsh": {
+   "name": "Nick Walsh",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "goga kikacheishvili": {
+   "name": "Goga Kikacheishvili",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "juri frischer": {
+   "name": "Juri Frischer",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "bulat sariyev": {
+   "name": "Bulat Sariyev",
+   "yellow_per_match": 7.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "juan martnez munuera": {
+   "name": "Juan Mart\u00ednez Munuera",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "vasilis fotias": {
+   "name": "Vasilis Fotias",
+   "yellow_per_match": 4.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "daniel schlager": {
+   "name": "Daniel Schlager",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "jasper vergoote": {
+   "name": "Jasper Vergoote",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "kristoffer hagenes": {
+   "name": "Kristoffer Hagenes",
+   "yellow_per_match": 3.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "bastian dankert": {
+   "name": "Bastian Dankert",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "luca pairetto": {
+   "name": "Luca Pairetto",
+   "yellow_per_match": 2.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "christian dingert": {
+   "name": "Christian Dingert",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "elchin masiyev": {
+   "name": "Elchin Masiyev",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "jeremie pignard": {
+   "name": "Jeremie Pignard",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mikkel redder": {
+   "name": "Mikkel Redder",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "pawel raczkowski": {
+   "name": "Pawel Raczkowski",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "antnio nobre": {
+   "name": "Ant\u00f3nio Nobre",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.333,
+   "total_matches": 3
+  },
+  "luka bilbija": {
+   "name": "Luka Bilbija",
+   "yellow_per_match": 6.0,
+   "red_per_match": 1.0,
+   "total_matches": 1
+  },
+  "anastasios papapetrou": {
+   "name": "Anastasios Papapetrou",
+   "yellow_per_match": 5.0,
+   "red_per_match": 0.0,
+   "total_matches": 4
+  },
+  "nicola rizzoli": {
+   "name": "Nicola Rizzoli",
+   "yellow_per_match": 0.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "b kuipers": {
+   "name": "B Kuipers",
+   "yellow_per_match": 0.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
   },
   "sandro meira ricci": {
    "name": "Sandro Meira Ricci",
    "yellow_per_match": 5.0,
    "red_per_match": 0.0,
    "total_matches": 1
-  },
-  "abdulrahman aljassim": {
-   "name": "Abdulrahman Al-Jassim",
-   "yellow_per_match": 4.0,
-   "red_per_match": 0.0,
-   "total_matches": 2
   },
   "victor miguel de freitas gomes": {
    "name": "Victor Miguel De Freitas Gomes",
@@ -265,29 +1303,11 @@
    "red_per_match": 0.0,
    "total_matches": 1
   },
-  "mohammed abulla hassan mohamed": {
-   "name": "Mohammed Abulla Hassan Mohamed",
-   "yellow_per_match": 3.0,
-   "red_per_match": 0.0,
-   "total_matches": 2
-  },
-  "alireza faghani": {
-   "name": "Alireza Faghani",
-   "yellow_per_match": 4.0,
-   "red_per_match": 0.0,
-   "total_matches": 2
-  },
   "antonio miguel mateu lahoz": {
    "name": "Antonio Miguel Mateu Lahoz",
    "yellow_per_match": 8.0,
    "red_per_match": 0.333,
    "total_matches": 3
-  },
-  "mustapha ghorbal": {
-   "name": "Mustapha Ghorbal",
-   "yellow_per_match": 2.0,
-   "red_per_match": 0.0,
-   "total_matches": 2
   },
   "bakary gassama": {
    "name": "Bakary Gassama",
@@ -303,13 +1323,115 @@
   },
   "stephanie frappart": {
    "name": "Stephanie Frappart",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ramon abatti abel": {
+   "name": "Ramon Abatti Abel",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "tori penso": {
+   "name": "Tori Penso",
+   "yellow_per_match": 3.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "ahmad heeralall": {
+   "name": "Ahmad Heeralall",
+   "yellow_per_match": 2.5,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "abdou abdel mefire": {
+   "name": "Abdou Abdel Mefire",
    "yellow_per_match": 1.0,
    "red_per_match": 0.0,
    "total_matches": 1
   },
-  "amin omar": {
-   "name": "Amin Omar",
+  "mohamed ali moussa": {
+   "name": "Mohamed Ali Moussa",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "mohamed diraneh guedi": {
+   "name": "Mohamed Diraneh Guedi",
    "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "godfrey nkhakananga": {
+   "name": "Godfrey Nkhakananga",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "clement franklin kpan": {
+   "name": "Clement Franklin Kpan",
+   "yellow_per_match": 1.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "adissa abdul raphiou ligali": {
+   "name": "Adissa Abdul Raphiou Ligali",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "patrice milazar": {
+   "name": "Patrice Milazar",
+   "yellow_per_match": 6.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "andofetra rakotojaona": {
+   "name": "Andofetra Rakotojaona",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "javier alberola rojas": {
+   "name": "Javier Alberola Rojas",
+   "yellow_per_match": 2.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "srdjan jovanovic": {
+   "name": "Srdjan Jovanovic",
+   "yellow_per_match": 2.333,
+   "red_per_match": 0.0,
+   "total_matches": 3
+  },
+  "jakob kehlet": {
+   "name": "Jakob Kehlet",
+   "yellow_per_match": 4.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "mohammed al emara": {
+   "name": "Mohammed Al Emara",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "yigal frid": {
+   "name": "Yigal Frid",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 2
+  },
+  "jarred gillett": {
+   "name": "Jarred Gillett",
+   "yellow_per_match": 3.0,
+   "red_per_match": 0.0,
+   "total_matches": 1
+  },
+  "sander van der eijk": {
+   "name": "Sander Van Der Eijk",
+   "yellow_per_match": 3.0,
    "red_per_match": 0.0,
    "total_matches": 1
   }

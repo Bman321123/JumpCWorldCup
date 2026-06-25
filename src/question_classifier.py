@@ -156,8 +156,12 @@ class QuestionClassifier:
                                       weight)
 
         # player props (observed live): "will <name> score a goal" / "... shot(s) on target"
+        # The name class must allow ACCENTED letters (é, í, ñ, ø, ü, ...) — otherwise a
+        # name like "Sangaré" fails to match here, falls through to _family_metric, and
+        # gets priced as a TEAM shots-on-target market (P >= 0.99), the worst overconfidence
+        # landmine on the board. [^\W\d_] matches any Unicode letter (re is unicode by default).
         if side is None and "both teams" not in text:
-            player = re.search(r"^will ([a-z .'\-]+?) (?:score|have|get|record)\b", text)
+            player = re.search(r"^will ((?:[^\W\d_]|[ .'\-])+?) (?:score|have|get|record)\b", text)
             if player and "team" not in player.group(1) and "there" != player.group(1).strip():
                 name = player.group(1).strip().title()
                 if re.search(r"shots? on target", text):
