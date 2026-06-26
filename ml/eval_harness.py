@@ -151,7 +151,7 @@ def verdict(stats: Dict[str, float]) -> str:
 # --------------------------------------------------------------------------- evaluate
 def evaluate(df: pd.DataFrame, test_start: str, half_life: float, ridge: float,
              elo_path: Optional[str], drop_friendlies: bool,
-             maxiter: int = 300) -> Dict[str, dict]:
+             maxiter: int = 300, elo_scale: float = 0.0009) -> Dict[str, dict]:
     cutoff = pd.to_datetime(test_start)
     train = df[df["date"] < cutoff]
     test = df[df["date"] >= cutoff].copy()
@@ -159,7 +159,7 @@ def evaluate(df: pd.DataFrame, test_start: str, half_life: float, ridge: float,
         test = test[~test["tournament"].str.contains("Friendly", case=False, na=False)]
     priors = {"attack": {}, "defense": {}}
     if elo_path and Path(elo_path).exists():
-        priors = elo_to_priors(json.load(open(elo_path)))
+        priors = elo_to_priors(json.load(open(elo_path)), scale=elo_scale)
     params = fit_dixon_coles(df, half_life_days=half_life, ridge=ridge,
                              elo_attack_prior=priors["attack"],
                              elo_defense_prior=priors["defense"],
@@ -249,6 +249,8 @@ def main() -> None:
     ap.add_argument("--half-life", type=float, default=500.0)
     ap.add_argument("--ridge", type=float, default=5.0)
     ap.add_argument("--elo", default=str(ROOT / "params" / "elo.json"))
+    ap.add_argument("--elo-scale", type=float, default=0.0009,
+                    help="strength units per Elo point in the prior (higher = de-compress favorites)")
     ap.add_argument("--no-friendlies", action="store_true")
     ap.add_argument("--maxiter", type=int, default=300)
     ap.add_argument("--selftest", action="store_true")
@@ -258,7 +260,7 @@ def main() -> None:
         sys.exit(0 if selftest() else 1)
     df = load_matches(args.db)
     res = evaluate(df, args.test_start, args.half_life, args.ridge, args.elo,
-                   args.no_friendlies, args.maxiter)
+                   args.no_friendlies, args.maxiter, args.elo_scale)
     print(report(res))
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(res, indent=1))

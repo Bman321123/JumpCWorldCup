@@ -88,6 +88,24 @@ def _resolve(name: str, idx: dict):
     return idx.get(name.strip().lower())
 
 
+NO_EDGE_SHRINK = 0.25      # how much of the model's deviation from 50 to KEEP
+
+
+def _shrink_no_edge(p: float, question_text: str) -> float:
+    """Neutralize corner/foul/card 'more than the opponent' comparatives toward 50.
+    Measured on live results (n=25): these markets have NO edge — leave-one-out
+    picks hug-50 over the model on every fold (Brier 0.329 -> 0.250). They are
+    high-variance count differentials with little team-strength signal, so the
+    model's confidence is pure noise that the quadratic punishes. SOT comparisons
+    are deliberately NOT shrunk (they carry a real, measured edge)."""
+    ql = question_text.lower()
+    if "than" in ql and "shots on target" not in ql and (
+            "more corner" in ql or "more foul" in ql or "more card" in ql
+            or "receive more" in ql or "commit more" in ql):
+        return 0.5 + (p - 0.5) * NO_EDGE_SHRINK
+    return p
+
+
 def _hours_to(iso) -> float:
     if not isinstance(iso, str):
         return 999.0
@@ -212,8 +230,9 @@ def sweep(dry: bool) -> dict:
                     continue
                 hitc = fuzzy_lookup(pred["question_text"], crowd)
                 crowd_p = hitc["crowd_pct"] / 100.0 if hitc else None
-                sv = to_platform_probability(submission(
-                    fp, crowd_p, pred["question_family"], POSITION))
+                sub = submission(fp, crowd_p, pred["question_family"], POSITION)
+                sub = _shrink_no_edge(sub, pred["question_text"])
+                sv = to_platform_probability(sub)
                 if not (1 <= sv <= 99) or sv == 50:
                     continue                      # invariant guard
                 if mk["id"] not in existing and mk["id"] not in journal:

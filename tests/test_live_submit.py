@@ -39,6 +39,19 @@ def test_infer_round_prices_knockouts_and_late_group():
     assert ls.infer_round("garbage") is None
 
 
+def test_shrink_no_edge_only_hits_count_comparatives():
+    """Corner/foul/card 'more than opponent' markets (no measured edge) shrink hard
+    toward 50; SOT comparatives and totals are left alone (real edge / different)."""
+    # corner/foul/card comparisons -> pulled to within 25% of the deviation
+    assert abs(ls._shrink_no_edge(0.82, "Will Brazil finish with more corner kicks than Scotland?") - 0.58) < 1e-9
+    assert abs(ls._shrink_no_edge(0.16, "Will Ecuador commit more fouls than Ivory Coast?") - 0.415) < 1e-9
+    assert ls._shrink_no_edge(0.70, "Will Curaçao receive more cards than Ivory Coast?") < 0.56
+    # NOT shrunk: SOT comparison (measured edge), goal totals, player props
+    assert ls._shrink_no_edge(0.72, "Will Germany have more shots on target than Ecuador?") == 0.72
+    assert ls._shrink_no_edge(0.80, "Will the match have 3 or more total goals?") == 0.80
+    assert ls._shrink_no_edge(0.25, "Will Sangaré have at least 1 shot on target?") == 0.25
+
+
 def test_journal_roundtrip(tmp_path, monkeypatch):
     j = {"abc": {"prediction_id": "p1", "probability": 62}}
     monkeypatch.setattr(ls, "JOURNAL", tmp_path / "j.json")

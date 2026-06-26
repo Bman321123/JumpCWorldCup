@@ -32,7 +32,13 @@ def main() -> None:
     ap.add_argument("--db", default=str(ROOT / "data" / "wc_forecasting.db"))
     ap.add_argument("--since", default="2019-01-01")
     ap.add_argument("--half-life", type=float, default=500.0)
-    ap.add_argument("--ridge", type=float, default=5.0)
+    # ridge 12 + elo-scale 0.0015 chosen by ml/eval_harness.py sweep (2026-06-26):
+    # the old 5 / 0.0009 under-weighted the Elo prior and compressed favorites, so
+    # over2.5/BTTS barely beat climatology. The stronger prior flips over2.5 to PASS
+    # and improves 1X2 and BTTS on the held-out backtest. See reports/tune_sweep.json.
+    ap.add_argument("--ridge", type=float, default=12.0)
+    ap.add_argument("--elo-scale", type=float, default=0.0015,
+                    help="strength units per Elo point (higher de-compresses favorites)")
     ap.add_argument("--asof", default=None, help="data cutoff (backtest discipline)")
     ap.add_argument("--elo", default=None, help="optional params/elo.json for priors")
     ap.add_argument("--out", default=str(ROOT / "params" / "dixon_coles.json"))
@@ -45,8 +51,8 @@ def main() -> None:
     priors = {"attack": {}, "defense": {}}
     if args.elo and Path(args.elo).exists():
         with open(args.elo) as f:
-            priors = elo_to_priors(json.load(f))
-        print(f"Elo priors loaded for {len(priors['attack'])} teams")
+            priors = elo_to_priors(json.load(f), scale=args.elo_scale)
+        print(f"Elo priors loaded for {len(priors['attack'])} teams (scale {args.elo_scale})")
 
     params = fit_dixon_coles(df, half_life_days=args.half_life, ridge=args.ridge,
                              elo_attack_prior=priors["attack"],
