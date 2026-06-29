@@ -8,6 +8,39 @@ from src.schedule import infer_round, local_match_date
 from src.types import QuestionFamily
 
 
+def test_r32_player_country_tag_routes_to_player_market():
+    """New R32 phrasing 'Player (Country) verb ... in regulation (90 minutes...)':
+    the (Country) tag must NOT make it a TEAM market (priced ~0.99 landmine)."""
+    qc = QuestionClassifier("config/groups.json")
+    p = qc.parse("Will Jamal Musiala (Germany) have 2 or more shots on target in "
+                 "regulation (90 minutes + stoppage time)?", "GER", "PAR",
+                 tournament_round="round_of_32")
+    assert p.family == QuestionFamily.PLAYER_MARKET, p.family
+    assert p.threshold == 2.0
+
+
+def test_win_in_regulation_is_90min_not_advance():
+    """'win in regulation (90 minutes + stoppage time)' must be the 90-min result,
+    NOT the knockout advance (the 'win'=advance rule must yield to the explicit cue)."""
+    from src.types import ResultScope
+    qc = QuestionClassifier("config/groups.json")
+    reg = qc.parse("Will Germany win in regulation (90 minutes + stoppage time)?",
+                   "GER", "PAR", tournament_round="round_of_32")
+    assert reg.scope == ResultScope.WIN_90, reg.scope
+    adv = qc.parse("Will Germany win?", "GER", "PAR", tournament_round="round_of_32")
+    assert adv.scope == ResultScope.ADVANCE, adv.scope
+
+
+def test_hydration_break_is_modeled_not_fallback():
+    """The new 'goal before the first hydration break' market parses to a goal-timing
+    metric (priced ~P(goal before 30')), not a manual-review fallback."""
+    qc = QuestionClassifier("config/groups.json")
+    p = qc.parse("Will a goal be scored before the first hydration break?", "GER", "PAR",
+                 tournament_round="round_of_32")
+    assert p.family == QuestionFamily.GOAL_MARKET
+    assert p.metric == "GOAL_BEFORE_BREAK"
+
+
 def test_accented_player_name_routes_to_player_market():
     """'Will Ibrahim Sangaré have at least 1 shot on target?' must be a PLAYER prop,
     not a TEAM shots-on-target market (which prices ~0.99 and cost a 0.94 Brier)."""

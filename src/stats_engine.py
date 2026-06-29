@@ -213,6 +213,21 @@ class StatsEngine:
         lam_side = lam_h if side == "HOME" else lam_a
         return p_any * lam_side / tot
 
+    def goal_before_minute(self, home: str, away: str, minute: float,
+                           ctx: Optional[MatchContext] = None) -> float:
+        """P(>=1 goal in the first `minute` minutes). Goals are slightly back-loaded
+        (first-half share < 0.5); take the first-half goal rate and scale it linearly
+        within the half. Used for 'will a goal be scored before the first hydration
+        break?' — FIFA cooling breaks fall ~30', triggered by heat."""
+        lam_h, lam_a = self.expected_goals(home, away, ctx)
+        total = lam_h + lam_a
+        h1 = self.p.half_shares.get("GOALS", DEFAULT_HALF_SHARES["GOALS"])
+        if minute <= 45:
+            lam_win = total * h1 * (minute / 45.0)
+        else:
+            lam_win = total * h1 + total * (1.0 - h1) * (min(minute, 90.0) - 45.0) / 45.0
+        return 1.0 - float(np.exp(-lam_win))
+
     # ----- knockout: extra time & penalties (PRD §4.7, fixes B8) -----
 
     def advance_prob(self, home: str, away: str, side: str = "HOME",

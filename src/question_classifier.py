@@ -61,6 +61,12 @@ class QuestionClassifier:
               tournament_round: str = "group",
               question_id: Optional[str] = None) -> ParsedQuestion:
         text = _norm(raw_text)
+        # Strip parenthetical clarifiers — "(Germany)", "(excluding own goals)",
+        # "(90 minutes + stoppage time)". They are NEVER the subject, but a team tag
+        # like "Kai Havertz (Germany)" otherwise makes _find_team see "Germany" and
+        # route the PLAYER prop to a TEAM market priced ~0.99 (a 0.94-Brier landmine).
+        # The win=90 cue ("regulation") sits OUTSIDE the parens, so it is preserved.
+        text = re.sub(r"\s*\([^)]*\)", "", text).strip()
         qid = question_id or f"q_{uuid.uuid4().hex[:8]}"
         weight = float(self.round_weights.get(tournament_round, 1.0))
         side = self._find_team(text, home_team, away_team)
@@ -154,6 +160,15 @@ class QuestionClassifier:
                                       "MATCH", f"BOTH|{metric}", threshold,
                                       Condition.GTE, window, ResultScope.NONE,
                                       weight)
+
+        # hydration / cooling / water break (new R32+ market): "Will a goal be scored
+        # before the first hydration break?" FIFA cooling breaks fall ~30' when it is
+        # hot, so this is P(a goal before ~minute 30) — a goal-timing question.
+        if re.search(r"\b(hydration|cooling|water)\s+break\b", text) and "goal" in text:
+            return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET,
+                                  home_team, away_team, "MATCH", "GOAL_BEFORE_BREAK",
+                                  1.0, Condition.BINARY_YES, window,
+                                  ResultScope.NONE, weight)
 
         # player props (observed live): "will <name> score a goal" / "... shot(s) on target"
         # The name class must allow ACCENTED letters (é, í, ñ, ø, ü, ...) — otherwise a

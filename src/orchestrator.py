@@ -30,6 +30,12 @@ from .uncertainty import ci_band
 
 logger = logging.getLogger(__name__)
 
+# FIFA cooling/hydration breaks are called at the first stoppage after ~30' (and ~75')
+# when WBGT is high. 30' is the nominal first-break minute; calibrate once the new
+# "goal before the first hydration break" markets start settling (sync_results Brier).
+HYDRATION_BREAK_MIN = 30.0
+
+
 def _fuzzy_player(name: str, market_players: dict):
     """Match a platform player name to a FanDuel market name (surname-tolerant)."""
     if not market_players:
@@ -276,6 +282,9 @@ class Orchestrator:
                 _, side, w = q.metric.split("|")
                 return self.engine.first_in_window(
                     q.home_team, q.away_team, side, TemporalWindow(w), ctx)
+            if q.metric == "GOAL_BEFORE_BREAK":
+                return self.engine.goal_before_minute(
+                    q.home_team, q.away_team, HYDRATION_BREAK_MIN, ctx)
             return self.engine.goal_market(q.home_team, q.away_team, q.metric,
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)
