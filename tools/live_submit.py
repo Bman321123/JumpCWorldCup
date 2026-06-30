@@ -38,6 +38,8 @@ sys.path.insert(0, str(ROOT))
 
 from src.auto_trader import load_criteria                        # noqa: E402
 from src.crowd_capture import fuzzy_lookup, latest_crowd         # noqa: E402
+from src.family_calibration import apply as calib_apply          # noqa: E402
+from src.family_calibration import load_table as load_calib      # noqa: E402
 from src.orchestrator import Orchestrator                        # noqa: E402
 from src.platform_client import (PlatformClient,                 # noqa: E402
                                  to_platform_probability)
@@ -86,24 +88,6 @@ def _codes():
 def _resolve(name: str, idx: dict):
     """Return the FIFA code, or None on miss (NEVER fabricate a code)."""
     return idx.get(name.strip().lower())
-
-
-NO_EDGE_SHRINK = 0.25      # how much of the model's deviation from 50 to KEEP
-
-
-def _shrink_no_edge(p: float, question_text: str) -> float:
-    """Neutralize corner/foul/card 'more than the opponent' comparatives toward 50.
-    Measured on live results (n=25): these markets have NO edge — leave-one-out
-    picks hug-50 over the model on every fold (Brier 0.329 -> 0.250). They are
-    high-variance count differentials with little team-strength signal, so the
-    model's confidence is pure noise that the quadratic punishes. SOT comparisons
-    are deliberately NOT shrunk (they carry a real, measured edge)."""
-    ql = question_text.lower()
-    if "than" in ql and "shots on target" not in ql and (
-            "more corner" in ql or "more foul" in ql or "more card" in ql
-            or "receive more" in ql or "commit more" in ql):
-        return 0.5 + (p - 0.5) * NO_EDGE_SHRINK
-    return p
 
 
 def _hours_to(iso) -> float:
@@ -176,6 +160,10 @@ def sweep(dry: bool) -> dict:
                         db_path=DB, online=True,
                         player_shares_path=str(ROOT / "config" / "player_shares.json"))
     crowd = latest_crowd(DB) if Path(DB).exists() else {}
+    calib = load_calib()         # skill-weighted shrink-only family calibration (or None)
+    if calib:
+        shrunk = {k: v["k"] for k, v in calib.items() if v.get("k", 1) < 0.97}
+        logger.info("  family calibration active: %s", shrunk or "(none)")
 
     new_payload, updates = [], []        # updates: (prediction_id, market_id, sv)
     s = {"priced": 0, "submitted": 0, "updated": 0, "errors": 0, "skipped": 0}
@@ -231,7 +219,8 @@ def sweep(dry: bool) -> dict:
                 hitc = fuzzy_lookup(pred["question_text"], crowd)
                 crowd_p = hitc["crowd_pct"] / 100.0 if hitc else None
                 sub = submission(fp, crowd_p, pred["question_family"], POSITION)
-                sub = _shrink_no_edge(sub, pred["question_text"])
+                sub = calib_apply(sub, pred["question_text"],
+                                  pred["question_family"], calib)
                 sv = to_platform_probability(sub)
                 if not (1 <= sv <= 99) or sv == 50:
                     continue                      # invariant guard

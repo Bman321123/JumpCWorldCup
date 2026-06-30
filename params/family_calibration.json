@@ -1,0 +1,115 @@
+{
+ "_note": "skill-weighted shrink-only calibration; refit nightly",
+ "loo_raw": 0.2599,
+ "loo_cal": 0.2387,
+ "families": {
+  "cmp_sot": {
+   "k": 1.0,
+   "n": 16,
+   "brier_raw": 0.2081,
+   "brier_cal": 0.2081
+  },
+  "offsides": {
+   "k": 0.6652,
+   "n": 15,
+   "brier_raw": 0.3181,
+   "brier_cal": 0.293
+  },
+  "first_goal": {
+   "k": 1.0,
+   "n": 5,
+   "brier_raw": 0.1567,
+   "brier_cal": 0.1567
+  },
+  "cmp_corners": {
+   "k": 1.0,
+   "n": 7,
+   "brier_raw": 0.2684,
+   "brier_cal": 0.2684
+  },
+  "team_score_window": {
+   "k": 0.6358,
+   "n": 24,
+   "brier_raw": 0.2921,
+   "brier_cal": 0.2713
+  },
+  "player_sot": {
+   "k": 0.6632,
+   "n": 27,
+   "brier_raw": 0.2796,
+   "brier_cal": 0.2626
+  },
+  "cmp_fouls_cards": {
+   "k": 1.0,
+   "n": 22,
+   "brier_raw": 0.2131,
+   "brier_cal": 0.2131
+  },
+  "team_sot": {
+   "k": 0.35,
+   "n": 19,
+   "brier_raw": 0.5131,
+   "brier_cal": 0.3282
+  },
+  "result": {
+   "k": 1.0,
+   "n": 19,
+   "brier_raw": 0.1809,
+   "brier_cal": 0.1809
+  },
+  "cards_total": {
+   "k": 1.0,
+   "n": 5,
+   "brier_raw": 0.29,
+   "brier_cal": 0.29
+  },
+  "other": {
+   "k": 1.0,
+   "n": 2,
+   "brier_raw": 0.1871,
+   "brier_cal": 0.1871
+  },
+  "corners_total": {
+   "k": 1.0,
+   "n": 8,
+   "brier_raw": 0.3023,
+   "brier_cal": 0.3023
+  },
+  "btts": {
+   "k": 1.0,
+   "n": 3,
+   "brier_raw": 0.1835,
+   "brier_cal": 0.1835
+  },
+  "player_goal": {
+   "k": 1.0,
+   "n": 20,
+   "brier_raw": 0.1235,
+   "brier_cal": 0.1235
+  },
+  "penalty_red": {
+   "k": 1.0,
+   "n": 5,
+   "brier_raw": 0.0858,
+   "brier_cal": 0.0858
+  },
+  "goals_total": {
+   "k": 1.0,
+   "n": 8,
+   "brier_raw": 0.2729,
+   "brier_cal": 0.2729
+  },
+  "half_h2_vs_h1": {
+   "k": 1.0,
+   "n": 2,
+   "brier_raw": 0.2809,
+   "brier_cal": 0.2809
+  },
+  "hydration": {
+   "k": 1.0,
+   "n": 3,
+   "brier_raw": 0.3158,
+   "brier_cal": 0.3158
+  }
+ }
+}

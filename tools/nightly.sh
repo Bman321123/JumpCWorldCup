@@ -31,5 +31,10 @@ run $PY ml/feature_store_v2.py
 run env OMP_NUM_THREADS=2 $PY ml/train_all.py
 # 6. pull settled platform results into predictions_log (closes the loop)
 run $PY tools/sync_results.py
+# 7. refit the skill-weighted family calibration on our own settled results. It is
+#    SHRINK-ONLY + leave-one-out gated, so it only writes a new table when it beats
+#    raw out-of-sample — it cannot ship overfit noise, and it self-corrects forward as
+#    clean results accumulate under the current model.
+run $PY -m src.family_calibration --min-n 15 --write
 
 echo "=== done $(date -u +%FT%TZ) ===" | tee -a "$LOG"
