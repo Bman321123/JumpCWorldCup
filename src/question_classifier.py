@@ -22,6 +22,9 @@ _THRESHOLD_PATTERNS: Tuple[Tuple[str, Condition], ...] = (
     (r"more than\s+(\d+(?:\.\d+)?)", Condition.GTE),
     (r"(\d+(?:\.\d+)?)\s*(?:or more|or greater|or above|\+)", Condition.GTE),
     (r"at least\s+(\d+(?:\.\d+)?)", Condition.GTE),
+    (r"(\d+(?:\.\d+)?)\s*or fewer", Condition.LT),     # "2 or fewer goals" = <= 2
+    (r"(\d+(?:\.\d+)?)\s*or less", Condition.LT),
+    (r"at most\s+(\d+(?:\.\d+)?)", Condition.LT),
     (r"fewer than\s+(\d+(?:\.\d+)?)", Condition.LT),
     (r"less than\s+(\d+(?:\.\d+)?)", Condition.LT),
     (r"exactly\s+(\d+(?:\.\d+)?)", Condition.EQ),
@@ -170,6 +173,31 @@ class QuestionClassifier:
                                   1.0, Condition.BINARY_YES, window,
                                   ResultScope.NONE, weight)
 
+        # stoppage / added / injury-time goal (new R16+ market): a goal in added time,
+        # a late high-intensity window — priced via goal timing.
+        if (("stoppage time" in text or "added time" in text or "injury time" in text)
+                and re.search(r"\bgoal|score", text)):
+            half = "H1" if ("first half" in text or "1st half" in text) else "H2"
+            return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET, home_team,
+                                  away_team, "MATCH", f"GOAL_STOPPAGE|{half}", 1.0,
+                                  Condition.BINARY_YES, window, ResultScope.NONE, weight)
+
+        # total shots (on AND off target) — a different metric from shots ON target.
+        if re.search(r"total shots\b", text) and "on target" not in text and threshold is not None:
+            return ParsedQuestion(raw_text, qid, QuestionFamily.SHOTS_MARKET, home_team,
+                                  away_team, "TOTAL", "TOTAL_SHOTS", threshold,
+                                  condition or Condition.GTE, window, ResultScope.NONE, weight)
+
+        # substitution markets — no structural driver; a calibrated base-rate PRIOR
+        # (subs before halftime are uncommon, mostly injury-driven). The live-results
+        # family calibration will refine it as these settle.
+        if "substitut" in text:
+            pr = 0.14 if ("before halftime" in text or "first half" in text
+                          or "before half-time" in text) else 0.75
+            return ParsedQuestion(raw_text, qid, QuestionFamily.GOAL_MARKET, home_team,
+                                  away_team, "MATCH", f"PRIOR|{pr}", 1.0,
+                                  Condition.BINARY_YES, window, ResultScope.NONE, weight)
+
         # player props (observed live): "will <name> score a goal" / "... shot(s) on target"
         # The name class must allow ACCENTED letters (é, í, ñ, ø, ü, ...) — otherwise a
         # name like "Sangaré" fails to match here, falls through to _family_metric, and
@@ -215,6 +243,13 @@ class QuestionClassifier:
                 return ParsedQuestion(raw_text, qid, family, home_team, away_team,
                                       side, "GOALS", 1.0, Condition.GTE, window,
                                       ResultScope.NONE, weight)
+            # "Will a card be shown / a goal be scored / an offside be called (in the
+            # first half)?" — indefinite article on a count metric = implicit >= 1.
+            if re.search(r"\b(a|an|any)\b", text) and re.search(
+                    r"\b(shown|scored|called|awarded|committed|recorded|be there)\b", text):
+                return ParsedQuestion(raw_text, qid, family, home_team, away_team,
+                                      side or "MATCH", metric, 1.0, Condition.GTE,
+                                      window, ResultScope.NONE, weight)
             raise QuestionParseError(
                 f"Could not parse threshold/condition from: {raw_text!r}")
 
@@ -233,6 +268,11 @@ class QuestionClassifier:
                 # strict ">" phrasings on integer lines mean N >= thr+1
                 if cond == Condition.GTE and pattern.startswith((r"over", r"more than")) \
                         and thr == int(thr):
+                    thr += 0.5
+                # INCLUSIVE "N or fewer / or less / at most" means <= N, encode as < N+0.5
+                # (distinct from exclusive "fewer than N" = < N, which is left as-is)
+                elif cond == Condition.LT and thr == int(thr) and (
+                        "or fewer" in pattern or "or less" in pattern or "at most" in pattern):
                     thr += 0.5
                 return thr, cond
         return None, None
@@ -256,8 +296,8 @@ class QuestionClassifier:
             return QuestionFamily.GOAL_MARKET, "BTTS"
         if "clean sheet" in text:
             return QuestionFamily.GOAL_MARKET, "CLEAN_SHEET"
-        if re.search(r"\b(win|draw|tied?|level|advance|qualify|progress|go through)\b",
-                     text):
+        if re.search(r"\b(win|winner|draw|tied?|level|ahead|leading|advance|qualify|"
+                     r"progress|go through)\b", text):
             return QuestionFamily.MATCH_RESULT, "RESULT"
         if re.search(r"\b(goal|goals|score)\b", text):
             return QuestionFamily.GOAL_MARKET, "GOALS"
@@ -282,6 +322,10 @@ class QuestionClassifier:
             r"\b(90 minutes|ninety minutes|regulation|normal time|full time result)\b", text))
         if re.search(r"\b(advance|qualify|progress|go through)\b", text):
             scope = ResultScope.ADVANCE
+        elif window != TemporalWindow.FULL or "halftime" in text or "half-time" in text:
+            # a WINDOWED result ("ahead/tied at halftime") is about the state at that
+            # point, never advancement — always the 90-min (windowed) result.
+            scope = ResultScope.WIN_90
         elif is_knockout and not explicit_90:
             # CONFIRMED 2026-06-13 (platform rule): knockout "win" = ADVANCE.
             scope = ResultScope.ADVANCE

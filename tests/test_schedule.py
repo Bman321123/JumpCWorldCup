@@ -31,6 +31,24 @@ def test_win_in_regulation_is_90min_not_advance():
     assert adv.scope == ResultScope.ADVANCE, adv.scope
 
 
+def test_new_r16_markets_parse_not_fallback():
+    """The R16-era phrasings that were falling to manual-review fallback now parse."""
+    from src.types import Condition
+    qc = QuestionClassifier("config/groups.json")
+    # "2 or fewer" = under 2.5 (<= 2), encoded as LT 2.5
+    g = qc.parse("Will the match have 2 or fewer total goals in regulation?", "BEL", "SEN")
+    assert g.condition == Condition.LT and g.threshold == 2.5
+    # "a card be shown in the first half" -> card market, H1, implicit >= 1
+    c = qc.parse("Will a card be shown in the first half?", "BEL", "SEN")
+    assert c.family == QuestionFamily.CARD_MARKET and c.threshold == 1.0
+    # stoppage-time goal -> goal-timing metric
+    s = qc.parse("Will a goal be scored in second-half stoppage time?", "BEL", "SEN")
+    assert s.metric == "GOAL_STOPPAGE|H2"
+    # total shots (on AND off target) is NOT the SOT market
+    t = qc.parse("Will there be 22 or more total shots (on and off target)?", "BEL", "SEN")
+    assert t.metric == "TOTAL_SHOTS"
+
+
 def test_hydration_break_is_modeled_not_fallback():
     """The new 'goal before the first hydration break' market parses to a goal-timing
     metric (priced ~P(goal before 30')), not a manual-review fallback."""

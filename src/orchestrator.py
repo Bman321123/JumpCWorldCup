@@ -246,6 +246,9 @@ class Orchestrator:
         if f == QuestionFamily.PENALTY_MARKET:
             return self.engine.penalty_prob(ctx)
         if f == QuestionFamily.SHOTS_MARKET:
+            if q.metric == "TOTAL_SHOTS":
+                return self.engine.total_shots_market(q.home_team, q.away_team,
+                                                      q.threshold, q.condition, ctx)
             return self.engine.shots_market(q.home_team, q.away_team, q.target,
                                             q.threshold, q.condition, q.window, ctx)
         if f == QuestionFamily.PLAYER_MARKET:
@@ -285,6 +288,11 @@ class Orchestrator:
             if q.metric == "GOAL_BEFORE_BREAK":
                 return self.engine.goal_before_minute(
                     q.home_team, q.away_team, HYDRATION_BREAK_MIN, ctx)
+            if q.metric.startswith("GOAL_STOPPAGE|"):
+                return self.engine.goal_in_stoppage(
+                    q.home_team, q.away_team, q.metric.split("|")[1], ctx)
+            if q.metric.startswith("PRIOR|"):
+                return float(q.metric.split("|")[1])       # calibrated base-rate prior
             return self.engine.goal_market(q.home_team, q.away_team, q.metric,
                                            q.target, q.threshold, q.condition,
                                            q.window, ctx)

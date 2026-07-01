@@ -228,6 +228,27 @@ class StatsEngine:
             lam_win = total * h1 + total * (1.0 - h1) * (min(minute, 90.0) - 45.0) / 45.0
         return 1.0 - float(np.exp(-lam_win))
 
+    def goal_in_stoppage(self, home: str, away: str, half: str = "H2",
+                         ctx: Optional[MatchContext] = None,
+                         added: float = 5.0, intensity: float = 1.35) -> float:
+        """P(>=1 goal in stoppage/added time of a half. Added time scores at an
+        ELEVATED rate (fatigue, chasing the game), so we boost the per-minute rate."""
+        lam_h, lam_a = self.expected_goals(home, away, ctx)
+        total = lam_h + lam_a
+        h1 = self.p.half_shares.get("GOALS", DEFAULT_HALF_SHARES["GOALS"])
+        share = h1 if half == "H1" else (1.0 - h1)
+        lam_win = total * share * (added / 45.0) * intensity
+        return 1.0 - float(np.exp(-lam_win))
+
+    def total_shots_market(self, home: str, away: str, threshold: float,
+                           condition: Condition, ctx: Optional[MatchContext] = None,
+                           sot_ratio: float = 0.36) -> float:
+        """Total shots (on AND off target) — distinct from SOT. Back it out of the
+        SOT lambdas (SOT is ~36% of all shots) and price as a Poisson count."""
+        lam_h, lam_a = self._sot_lambdas(home, away, ctx)
+        lam = (lam_h + lam_a) / max(sot_ratio, 0.1)
+        return count_prob(lambda k: float(poisson.cdf(k, lam)), threshold, condition)
+
     # ----- knockout: extra time & penalties (PRD §4.7, fixes B8) -----
 
     def advance_prob(self, home: str, away: str, side: str = "HOME",
